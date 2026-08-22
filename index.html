@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Un pequeño secreto</title>
+<style>
+  :root{
+    --bg-1:#0f0b09;
+    --bg-2:#1c130d;
+    --kraft-hi:#caa46b;
+    --kraft-mid:#a97f45;
+    --kraft-lo:#7c5a30;
+    --paper:#e7d9ae;
+    --ink:#3a2510;
+    --rope:#6b4f28;
+    --reveal:0;
+    --glow:0;
+    --flicker:1;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html,body{ height:100%; margin:0; overscroll-behavior:none; }
+
+  body{
+    min-height:100svh;
+    background:
+      radial-gradient(120% 90% at 50% 38%, #2a1c12 0%, var(--bg-2) 45%, var(--bg-1) 100%);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    font-family:'Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,'Times New Roman',serif;
+    touch-action:none;
+    user-select:none; -webkit-user-select:none;
+  }
+
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    opacity:.045; mix-blend-mode:overlay;
+    background-image:
+      radial-gradient(circle at 20% 30%, #fff 0 .6px, transparent .6px),
+      radial-gradient(circle at 60% 70%, #fff 0 .5px, transparent .5px),
+      radial-gradient(circle at 80% 20%, #fff 0 .7px, transparent .7px);
+    background-size: 3px 3px, 4px 4px, 5px 5px;
+  }
+
+  .ambient-glow{
+    position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(40% 34% at 50% 48%,
+      rgba(255,150,60, calc((0.09 + var(--glow) * 0.32) * var(--flicker))) 0%,
+      rgba(255,110,40, calc((0.035 + var(--glow) * 0.16) * var(--flicker))) 42%,
+      transparent 74%);
+  }
+
+  .scene{
+    position:relative;
+    width:min(92vw, 480px);
+    height:min(80svh, 640px);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:clamp(30px, 6svh, 58px);
+  }
+
+  .hint{
+    position:absolute; top:9%; left:50%;
+    transform:translateX(-50%);
+    font-size:clamp(12px,2.6vw,14px);
+    letter-spacing:.14em; text-transform:uppercase;
+    color:#c9a876; opacity:.75;
+    font-style:italic;
+    transition:opacity .9s ease;
+    pointer-events:none; white-space:nowrap;
+  }
+  .hint.is-hidden{ opacity:0; }
+
+  /* ===================== BOX (never burns — only the lid does) ===================== */
+  .box-wrap{
+    position:relative;
+    width:clamp(196px, 48vw, 280px);
+    aspect-ratio: 5 / 4;
+  }
+
+  .box-body{
+    position:relative;
+    width:100%; height:100%;
+    padding:clamp(11px, 3.6%, 17px);
+    border-radius:7px;
+    background:
+      repeating-linear-gradient(112deg, rgba(255,255,255,.05) 0 2px, transparent 2px 7px),
+      linear-gradient(160deg, var(--kraft-hi) 0%, var(--kraft-mid) 52%, var(--kraft-lo) 100%);
+    box-shadow:
+      inset 0 2px 3px rgba(255,255,255,.30),
+      inset 0 -14px 20px rgba(35,20,8,.5),
+      0 20px 36px rgba(0,0,0,.55);
+  }
+  .box-body::after{
+    content:"";
+    position:absolute; inset:4px;
+    border-radius:5px;
+    box-shadow: inset 0 0 0 1px rgba(60,38,16,.35);
+    pointer-events:none;
+  }
+
+  .box-interior{
+    position:relative;
+    width:100%; height:100%;
+    border-radius:3px;
+    overflow:hidden;
+    background: radial-gradient(120% 120% at 50% 28%, #241407 0%, #150c05 68%, #0d0704 100%);
+    box-shadow: inset 0 8px 16px rgba(0,0,0,.75), inset 0 0 0 1px rgba(0,0,0,.35);
+  }
+  .box-interior::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background: radial-gradient(46% 42% at 50% 58%,
+      rgba(255,158,64, calc(.05 + var(--reveal) * .62)) 0%,
+      rgba(255,110,40, calc(.02 + var(--reveal) * .26)) 46%,
+      transparent 75%);
+    transition: background .25s linear;
+  }
+
+  .box-text{
+    position:absolute; inset:0; z-index:2;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:11%;
+  }
+  .box-text span{
+    font-family:'Big Caslon','Iowan Old Style','Palatino Linotype',Georgia,serif;
+    font-style:italic;
+    font-size:clamp(16px, 4.4vw, 22px);
+    line-height:1.42; letter-spacing:.02em;
+    color:#f1dfb8;
+    text-shadow: 0 0 0 rgba(255,180,90,0);
+    transition: text-shadow 1.6s ease, color 1.6s ease;
+  }
+  .box-wrap.is-revealed .box-text span{
+    color:#fff2d2;
+    text-shadow: 0 0 18px rgba(255,175,90,.65), 0 0 42px rgba(255,140,60,.35);
+  }
+
+  .lid-canvas{
+    position:absolute; inset:0; z-index:3;
+    width:100%; height:100%;
+  }
+
+  .fire-canvas{
+    position:absolute;
+    left:-22%; right:-22%;
+    top:-115%; bottom:38%;
+    z-index:5;
+    pointer-events:none;
+    opacity:0;
+    transition: opacity 1.2s ease;
+    filter: drop-shadow(0 0 9px rgba(255,130,50,.35));
+  }
+  .fire-canvas.is-active{ opacity:1; }
+
+  /* ===================== MATCH ===================== */
+  .match-zone{
+    position:relative; width:100%;
+    height:clamp(74px, 12svh, 100px);
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .strike-strip{
+    position:absolute; left:50%; bottom:2px;
+    transform:translateX(-50%);
+    width:clamp(80px, 24vw, 108px); height:16px;
+    border-radius:3px;
+    background:
+      repeating-linear-gradient(100deg, rgba(0,0,0,.14) 0 2px, transparent 2px 4px),
+      linear-gradient(180deg,#5c3a26,#43281a);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.5), 0 1px 1px rgba(255,255,255,.05);
+  }
+
+  .match{
+    position:absolute; left:50%; top:0;
+    width:16px; height:100px;
+    transform: translate(-50%, 0) rotate(4deg);
+    cursor:grab; touch-action:none; z-index:10;
+  }
+  .match.is-dragging{ cursor:grabbing; }
+  .match.is-done{ pointer-events:none; }
+
+  .match .stick{
+    position:absolute; left:50%; bottom:0;
+    width:4px; height:80px; transform:translateX(-50%);
+    background: linear-gradient(90deg,#c99a5b,#e3bb80 40%,#c99a5b);
+    border-radius:2px;
+  }
+  .match .head{
+    position:absolute; left:50%; top:0;
+    width:15px; height:21px; transform:translateX(-50%);
+    background: radial-gradient(circle at 35% 25%, #a8402c, #6b1d14 75%);
+    border-radius:45% 45% 40% 40%;
+    box-shadow: inset -2px -2px 3px rgba(0,0,0,.4);
+    transition: background .2s ease;
+  }
+  .match.is-lit .head{
+    background: radial-gradient(circle at 35% 25%, #6b1d14, #2a0d09 75%);
+  }
+
+  .match-flame-canvas{
+    position:absolute;
+    left:50%; top:-40px;
+    width:44px; height:56px;
+    transform:translateX(-50%);
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .25s ease;
+    filter: drop-shadow(0 0 5px rgba(255,150,60,.55));
+  }
+  .match.is-lit .match-flame-canvas{ opacity:1; }
+
+  .smoke{
+    position:absolute; width:10px; height:10px; border-radius:50%;
+    background: radial-gradient(circle, rgba(210,205,195,.55), rgba(210,205,195,0) 70%);
+    pointer-events:none; z-index:9;
+    animation: smokeRise 1.8s ease-out forwards;
+    filter: blur(1px);
+  }
+  @keyframes smokeRise{
+    0%{ opacity:.55; transform: translate(0,0) scale(1); }
+    100%{ opacity:0; transform: translate(var(--dx,10px), -60px) scale(2.6); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="ambient-glow" id="ambientGlow"></div>
+
+  <div class="scene" id="scene">
+    <p class="hint" id="hint">Enciéndelo&hellip;</p>
+
+    <div class="box-wrap" id="boxWrap">
+      <canvas class="fire-canvas" id="fireCanvas"></canvas>
+      <div class="box-body">
+        <div class="box-interior" id="boxInterior">
+          <div class="box-text" id="boxText"><span>Eres especial para mí.</span></div>
+          <canvas class="lid-canvas" id="lidCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="match-zone" id="matchZone">
+      <div class="strike-strip" id="strikeStrip"></div>
+      <div class="match" id="match">
+        <div class="stick"></div>
+        <div class="head"></div>
+        <canvas class="match-flame-canvas" id="matchFlameCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  var scene        = document.getElementById('scene');
+  var hint         = document.getElementById('hint');
+  var boxWrap      = document.getElementById('boxWrap');
+  var boxInterior  = document.getElementById('boxInterior');
+  var lidCanvas    = document.getElementById('lidCanvas');
+  var fireCanvas   = document.getElementById('fireCanvas');
+  var matchZone    = document.getElementById('matchZone');
+  var strikeStrip  = document.getElementById('strikeStrip');
+  var match        = document.getElementById('match');
+  var matchFlameCv = document.getElementById('matchFlameCanvas');
+  var ambientGlow  = document.getElementById('ambientGlow');
+
+  var lctx = lidCanvas.getContext('2d');
+  var fctx = fireCanvas.getContext('2d');
+  var mctx = matchFlameCv.getContext('2d');
+
+  var state = 'idle'; // idle -> lit -> burning -> done
+  var dragging = false;
+  var matchPos = { x:0, y:0 };
+  var homePos  = { x:0, y:0 };
+  var curRotation = 4;
+
+  var DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+
+  /* ---------------------------------------------------------------- */
+  /* generic flame-tongue renderer, reused for both the match & fire  */
+  /* ---------------------------------------------------------------- */
+  function flamePath(ctx, cx, baseY, w, h, lean){
+    var topX = cx + lean;
+    ctx.beginPath();
+    ctx.moveTo(cx - w/2, baseY);
+    ctx.quadraticCurveTo(cx - w*0.60, baseY - h*0.40, topX - w*0.05, baseY - h*0.80);
+    ctx.quadraticCurveTo(topX + w*0.12, baseY - h*1.00, topX, baseY - h);
+    ctx.quadraticCurveTo(topX - w*0.10, baseY - h*0.84, cx + w*0.20, baseY - h*0.52);
+    ctx.quadraticCurveTo(cx + w*0.60, baseY - h*0.28, cx + w/2, baseY);
+    ctx.closePath();
+  }
+
+  function drawFlame(ctx, cx, baseY, w, h, lean, alpha){
+    alpha = alpha === undefined ? 1 : alpha;
+    if (h <= 0.5) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    flamePath(ctx, cx, baseY, w, h, lean);
+    var g1 = ctx.createLinearGradient(cx, baseY, cx, baseY - h);
+    g1.addColorStop(0,   'rgba(255,120,40,.95)');
+    g1.addColorStop(0.5, 'rgba(255,150,40,.85)');
+    g1.addColorStop(1,   'rgba(255,120,40,0)');
+    ctx.fillStyle = g1;
+    ctx.fill();
+
+    flamePath(ctx, cx, baseY - h*0.03, w*0.56, h*0.72, lean*0.7);
+    var g2 = ctx.createLinearGradient(cx, baseY, cx, baseY - h*0.72);
+    g2.addColorStop(0,   'rgba(255,225,140,.98)');
+    g2.addColorStop(0.55,'rgba(255,190,70,.9)');
+    g2.addColorStop(1,   'rgba(255,150,40,0)');
+    ctx.fillStyle = g2;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(cx + lean*0.15, baseY - h*0.10, w*0.20, h*0.16, 0, 0, Math.PI*2);
+    var g3 = ctx.createRadialGradient(cx,baseY-h*0.10,0, cx,baseY-h*0.10,w*0.20);
+    g3.addColorStop(0,'rgba(255,248,220,.95)');
+    g3.addColorStop(1,'rgba(255,248,220,0)');
+    ctx.fillStyle = g3;
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* match flame                                                       */
+  /* ---------------------------------------------------------------- */
+  var matchFlameT = 0;
+  var matchFlameRAF = null;
+
+  function sizeMatchFlameCanvas(){
+    var r = matchFlameCv.getBoundingClientRect();
+    matchFlameCv.width  = Math.round(r.width * DPR);
+    matchFlameCv.height = Math.round(r.height * DPR);
+    mctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+
+  function matchFlameLoop(){
+    if (state !== 'lit'){ matchFlameRAF = null; return; }
+    matchFlameT += 0.016;
+    var w = matchFlameCv.width/DPR, h = matchFlameCv.height/DPR;
+    mctx.clearRect(0,0,w,h);
+    var lean = Math.sin(matchFlameT*5.2)*3 + Math.sin(matchFlameT*1.6)*1.4;
+    var hVar = 1 + Math.sin(matchFlameT*7.1)*0.06;
+    drawFlame(mctx, w/2, h - 8, 15, (h-16)*hVar, lean, 1);
+    matchFlameRAF = requestAnimationFrame(matchFlameLoop);
+  }
+
+  function startMatchFlame(){
+    sizeMatchFlameCanvas();
+    if (!matchFlameRAF) matchFlameRAF = requestAnimationFrame(matchFlameLoop);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* lid paper texture                                                  */
+  /* ---------------------------------------------------------------- */
+  var paperPattern = null;
+
+  function buildPaperPattern(w, h){
+    var pc = document.createElement('canvas');
+    pc.width = Math.max(1,w); pc.height = Math.max(1,h);
+    var pctx = pc.getContext('2d');
+    var g = pctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0, '#eadcae');
+    g.addColorStop(1, '#cdb883');
+    pctx.fillStyle = g;
+    pctx.fillRect(0,0,w,h);
+    pctx.globalAlpha = .08;
+    for (var i=0;i<220;i++){
+      pctx.fillStyle = (i % 2 === 0) ? '#000' : '#fff';
+      var rx = Math.random()*w, ry = Math.random()*h, rr = Math.random()*1.3+.3;
+      pctx.beginPath();
+      pctx.ellipse(rx, ry, rr, rr*0.6, Math.random()*Math.PI, 0, Math.PI*2);
+      pctx.fill();
+    }
+    pctx.globalAlpha = 1;
+
+    pctx.strokeStyle = '#6b4f28';
+    pctx.lineWidth = Math.max(2, w*0.022);
+    pctx.lineCap = 'round';
+    pctx.beginPath(); pctx.moveTo(w/2, h*0.02); pctx.lineTo(w/2, h*0.98); pctx.stroke();
+    pctx.beginPath(); pctx.moveTo(w*0.02, h/2); pctx.lineTo(w*0.98, h/2); pctx.stroke();
+    pctx.fillStyle = '#7a5c33';
+    pctx.beginPath();
+    pctx.ellipse(w/2, h/2, w*0.032, h*0.024, -0.15, 0, Math.PI*2);
+    pctx.fill();
+
+    return pc;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* sizing                                                             */
+  /* ---------------------------------------------------------------- */
+  var boxW = 0, boxH = 0;
+  var fireOffsetX = 0, fireOffsetY = 0;
+
+  function sizeCanvases(){
+    if (state === 'burning' || state === 'done') return;
+    var r = boxInterior.getBoundingClientRect();
+    boxW = r.width; boxH = r.height;
+
+    lidCanvas.width  = Math.round(boxW * DPR);
+    lidCanvas.height = Math.round(boxH * DPR);
+    lidCanvas.style.width = boxW + 'px';
+    lidCanvas.style.height = boxH + 'px';
+    lctx.setTransform(DPR,0,0,DPR,0,0);
+
+    var fr = fireCanvas.getBoundingClientRect();
+    fireCanvas.width  = Math.round(fr.width * DPR);
+    fireCanvas.height = Math.round(fr.height * DPR);
+    fireCanvas.style.width = fr.width + 'px';
+    fireCanvas.style.height = fr.height + 'px';
+    fctx.setTransform(DPR,0,0,DPR,0,0);
+
+    fireOffsetX = r.left - fr.left;
+    fireOffsetY = r.top - fr.top;
+
+    paperPattern = buildPaperPattern(Math.round(boxW), Math.round(boxH));
+    lctx.clearRect(0,0,boxW,boxH);
+    lctx.drawImage(paperPattern, 0, 0, boxW, boxH);
+  }
+
+  function placeMatchHome(){
+    var zr = matchZone.getBoundingClientRect();
+    var mr = match.getBoundingClientRect();
+    homePos.x = (zr.width - mr.width) / 2 - 46;
+    homePos.y = 4;
+    if (!dragging && state !== 'burning' && state !== 'done'){
+      matchPos.x = homePos.x;
+      matchPos.y = homePos.y;
+      applyMatchTransform();
+    }
+  }
+
+  function applyMatchTransform(){
+    match.style.transform = 'translate(' + matchPos.x + 'px,' + matchPos.y + 'px) rotate(' + curRotation + 'deg)';
+  }
+
+  window.addEventListener('resize', function(){
+    sizeCanvases();
+    placeMatchHome();
+    if (state === 'lit') sizeMatchFlameCanvas();
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* dragging the match (mouse + touch, unified via Pointer Events)    */
+  /* ---------------------------------------------------------------- */
+  var pointerStart = { x:0, y:0 };
+  var matchStart   = { x:0, y:0 };
+
+  match.addEventListener('pointerdown', function(e){
+    if (state === 'burning' || state === 'done') return;
+    dragging = true;
+    match.classList.add('is-dragging');
+    match.setPointerCapture(e.pointerId);
+    pointerStart.x = e.clientX; pointerStart.y = e.clientY;
+    matchStart.x = matchPos.x; matchStart.y = matchPos.y;
+    hideHint();
+  });
+
+  match.addEventListener('pointermove', function(e){
+    if (!dragging) return;
+    var dx = e.clientX - pointerStart.x;
+    var dy = e.clientY - pointerStart.y;
+    matchPos.x = matchStart.x + dx;
+    matchPos.y = matchStart.y + dy;
+    curRotation = Math.max(-18, Math.min(18, dx * 0.06)) + 4;
+    applyMatchTransform();
+    checkStrike();
+    checkIgniteBox();
+  });
+
+  function endDrag(e){
+    if (!dragging) return;
+    dragging = false;
+    match.classList.remove('is-dragging');
+    try { match.releasePointerCapture(e.pointerId); } catch(err){}
+  }
+  match.addEventListener('pointerup', endDrag);
+  match.addEventListener('pointercancel', endDrag);
+
+  function hideHint(){ hint.classList.add('is-hidden'); }
+
+  function rectsOverlap(a, b){
+    return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+  }
+  function getHeadRect(){ return match.querySelector('.head').getBoundingClientRect(); }
+
+  function checkStrike(){
+    if (state !== 'idle') return;
+    if (rectsOverlap(getHeadRect(), strikeStrip.getBoundingClientRect())) igniteMatch();
+  }
+
+  function igniteMatch(){
+    if (state !== 'idle') return;
+    state = 'lit';
+    match.classList.add('is-lit');
+    hideHint();
+    startMatchFlame();
+  }
+
+  function checkIgniteBox(){
+    if (state !== 'lit') return;
+    var head = getHeadRect();
+    var box = boxInterior.getBoundingClientRect();
+    var margin = box.width * 0.1;
+    var target = {
+      left: box.left + margin, right: box.right - margin,
+      top: box.top + margin, bottom: box.bottom - margin
+    };
+    if (rectsOverlap(head, target)) startBurn();
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* smoke                                                              */
+  /* ---------------------------------------------------------------- */
+  function spawnSmoke(fromEl, count){
+    var r = fromEl.getBoundingClientRect();
+    for (var i=0;i<count;i++){
+      (function(i){
+        setTimeout(function(){
+          var s = document.createElement('div');
+          s.className = 'smoke';
+          var jitterX = (Math.random()*20 - 10);
+          s.style.left = (r.left + r.width/2 + jitterX - 5) + 'px';
+          s.style.top  = (r.top + 4) + 'px';
+          s.style.setProperty('--dx', (Math.random()*24 - 12) + 'px');
+          document.body.appendChild(s);
+          s.addEventListener('animationend', function(){ s.remove(); });
+        }, i * 220);
+      })(i);
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* fire spreading across the lid                                     */
+  /* ---------------------------------------------------------------- */
+  var N = 80;
+  var radii   = new Float32Array(N);
+  var speeds  = new Float32Array(N);
+  var delays  = new Float32Array(N);
+  var seedJit = new Float32Array(N);
+  var target = 0, BAND = 0;
+  var elapsed = 0, lastTs = 0;
+  var burnDone = false;
+  var MAX_DURATION = 8.6;
+
+  var sparks = [];
+
+  function initBurnField(){
+    target = Math.hypot(boxW/2, boxH/2) * 1.1;
+    BAND = target * 0.15;
+    var desired = 6.2;
+    for (var i=0;i<N;i++){
+      radii[i]  = 0;
+      speeds[i] = (target / desired) * (0.5 + Math.random()*1.0);
+      delays[i] = Math.random() * 1.0;
+      seedJit[i] = (Math.random()*2 - 1) * (target*0.045);
+    }
+    sparks.length = 0;
+  }
+
+  function smoothRadii(){
+    var copy = radii.slice();
+    for (var i=0;i<N;i++){
+      var prev = copy[(i - 1 + N) % N];
+      var next = copy[(i + 1) % N];
+      radii[i] = radii[i]*0.86 + (prev+next)/2*0.14;
+    }
+  }
+
+  function angleAt(i){ return (i/N) * Math.PI * 2; }
+
+  function polygonPoints(cx, cy, radiusFn){
+    var pts = [];
+    for (var i=0;i<N;i++){
+      var a = angleAt(i);
+      var r = radiusFn(i);
+      pts.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r]);
+    }
+    return pts;
+  }
+  function pathFromPoints(ctx, pts){
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath();
+  }
+
+  function renderRadiusAt(i){
+    var jitter = seedJit[i] + Math.sin(elapsed*0.8 + i*2.1) * (target*0.018);
+    var r = radii[i] + jitter;
+    return Math.max(0, Math.min(target, r));
+  }
+
+  function drawLidFrame(){
+    var cx = boxW/2, cy = boxH/2;
+
+    lctx.clearRect(0,0,boxW,boxH);
+    lctx.drawImage(paperPattern, 0, 0, boxW, boxH);
+
+    var outerPts = polygonPoints(cx, cy, function(i){ return renderRadiusAt(i); });
+    var midPts   = polygonPoints(cx, cy, function(i){ return Math.max(0, renderRadiusAt(i) - BAND*0.42); });
+    var darkPts  = polygonPoints(cx, cy, function(i){ return Math.max(0, renderRadiusAt(i) - BAND*0.72); });
+    var innerPts = polygonPoints(cx, cy, function(i){ return Math.max(0, renderRadiusAt(i) - BAND); });
+
+    lctx.save();
+    lctx.globalCompositeOperation = 'source-over';
+
+    pathFromPoints(lctx, outerPts);
+    lctx.fillStyle = '#4a2712';
+    lctx.fill();
+
+    pathFromPoints(lctx, midPts);
+    lctx.fillStyle = '#2a160a';
+    lctx.fill();
+
+    pathFromPoints(lctx, darkPts);
+    lctx.fillStyle = '#150b05';
+    lctx.fill();
+
+    if (state === 'burning'){
+      pathFromPoints(lctx, outerPts);
+      lctx.lineWidth = Math.max(1.4, BAND*0.14);
+      lctx.strokeStyle = 'rgba(255,140,50,.85)';
+      lctx.stroke();
+      lctx.lineWidth = Math.max(0.8, BAND*0.06);
+      lctx.strokeStyle = 'rgba(255,210,120,.75)';
+      lctx.stroke();
+    }
+    lctx.restore();
+
+    lctx.save();
+    lctx.globalCompositeOperation = 'source-over';
+    for (var s=0; s<sparks.length; s++){
+      var sp = sparks[s];
+      lctx.beginPath();
+      lctx.arc(sp.x, sp.y, sp.r + sp.r*0.5, 0, Math.PI*2);
+      lctx.fillStyle = '#2a160a';
+      lctx.fill();
+      if (sp.r < sp.maxR*0.9 && state === 'burning'){
+        lctx.beginPath();
+        lctx.arc(sp.x, sp.y, sp.r + sp.r*0.5, 0, Math.PI*2);
+        lctx.lineWidth = 1.1;
+        lctx.strokeStyle = 'rgba(255,150,60,.7)';
+        lctx.stroke();
+      }
+    }
+    lctx.restore();
+
+    lctx.save();
+    lctx.globalCompositeOperation = 'destination-out';
+    pathFromPoints(lctx, innerPts);
+    lctx.fillStyle = 'rgba(0,0,0,1)';
+    lctx.fill();
+    for (var s2=0; s2<sparks.length; s2++){
+      var sp2 = sparks[s2];
+      lctx.beginPath();
+      lctx.arc(sp2.x, sp2.y, sp2.r, 0, Math.PI*2);
+      lctx.fill();
+    }
+    lctx.restore();
+  }
+
+  function updateSparks(dt){
+    if (state !== 'burning') return;
+    if (Math.random() < 0.55 * dt){
+      if (sparks.length < 10 && elapsed > 0.6){
+        var i = Math.floor(Math.random()*N);
+        var a = angleAt(i);
+        var baseR = radii[i];
+        var reach = baseR + 10 + Math.random()*26;
+        if (reach < target*0.92){
+          sparks.push({
+            x: boxW/2 + Math.cos(a)*reach,
+            y: boxH/2 + Math.sin(a)*reach,
+            r: 0.5,
+            maxR: 6 + Math.random()*10,
+            grow: 14 + Math.random()*10
+          });
+        }
+      }
+    }
+    for (var k=sparks.length-1; k>=0; k--){
+      var sp = sparks[k];
+      if (sp.r < sp.maxR) sp.r += sp.grow * dt;
+      var dx = sp.x - boxW/2, dy = sp.y - boxH/2;
+      var ang = Math.atan2(dy,dx); if (ang<0) ang += Math.PI*2;
+      var idx = Math.round(ang / (Math.PI*2) * N) % N;
+      var dist = Math.hypot(dx,dy);
+      if (radii[idx] > dist + BAND*0.3) sparks.splice(k,1);
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* flame tongues along the burning frontier                          */
+  /* ---------------------------------------------------------------- */
+  var flameSlots = [];
+  var embers = [];
+
+  function initFlameSlots(){
+    flameSlots = [];
+    for (var i=0;i<N;i+=2){
+      flameSlots.push({ idx:i, phase: Math.random()*Math.PI*2 });
+    }
+  }
+
+  function drawFireFrame(dt){
+    var w = fireCanvas.width/DPR, h = fireCanvas.height/DPR;
+    fctx.clearRect(0,0,w,h);
+
+    var cx = boxW/2, cy = boxH/2;
+    var baseW = Math.max(14, boxW*0.10);
+    var baseH = Math.max(22, boxH*0.30);
+
+    fctx.globalCompositeOperation = 'lighter';
+
+    for (var s=0; s<flameSlots.length; s++){
+      var fs = flameSlots[s];
+      var i = fs.idx;
+      var active = elapsed > delays[i] && radii[i] < target - 2;
+      if (!active) continue;
+
+      var a = angleAt(i);
+      var r = radii[i];
+      var px = cx + Math.cos(a)*r + fireOffsetX;
+      var py = cy + Math.sin(a)*r + fireOffsetY;
+
+      var fadeIn  = Math.min(1, (elapsed - delays[i]) / 0.5);
+      var fadeOut = Math.min(1, (target - 2 - radii[i]) / (target*0.14));
+      var intensity = Math.max(0, fadeIn) * Math.max(0, fadeOut);
+      if (intensity <= 0.02) continue;
+
+      var hVar = 0.65 + 0.35*Math.sin(elapsed*3.3 + fs.phase);
+      var wVar = 0.85 + 0.15*Math.sin(elapsed*2.1 + fs.phase*1.7);
+      var lean = Math.sin(elapsed*4.4 + fs.phase) * baseW*0.55 +
+                 Math.sin(elapsed*1.5 + fs.phase*0.6) * baseW*0.25;
+
+      drawFlame(fctx, px, py, baseW*wVar, baseH*hVar*intensity, lean, 0.85*intensity);
+    }
+
+    fctx.globalCompositeOperation = 'source-over';
+
+    if (state === 'burning' && Math.random() < 0.5){
+      var i2 = Math.floor(Math.random()*N);
+      if (elapsed > delays[i2] && radii[i2] < target - 4){
+        var a2 = angleAt(i2);
+        var r2 = radii[i2];
+        embers.push({
+          x: cx + Math.cos(a2)*r2 + fireOffsetX + (Math.random()*10-5),
+          y: cy + Math.sin(a2)*r2 + fireOffsetY,
+          vx: (Math.random()-0.5)*14,
+          vy: -(30 + Math.random()*34),
+          life:0, maxLife: 0.7 + Math.random()*0.7,
+          size: 1.4 + Math.random()*1.8
+        });
+      }
+    }
+    fctx.globalCompositeOperation = 'lighter';
+    for (var e=embers.length-1; e>=0; e--){
+      var em = embers[e];
+      em.life += dt;
+      if (em.life >= em.maxLife){ embers.splice(e,1); continue; }
+      em.x += em.vx*dt; em.y += em.vy*dt; em.vx *= 0.985;
+      var t = em.life/em.maxLife;
+      var alpha = Math.sin((1-t)*Math.PI/2);
+      fctx.beginPath();
+      fctx.arc(em.x, em.y, em.size*(1-t*0.3), 0, Math.PI*2);
+      fctx.fillStyle = 'rgba(255,' + Math.round(210-60*t) + ',' + Math.round(90-70*t) + ',' + (alpha*0.9) + ')';
+      fctx.fill();
+    }
+    fctx.globalCompositeOperation = 'source-over';
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* main burn loop                                                     */
+  /* ---------------------------------------------------------------- */
+  function startBurn(){
+    if (state === 'burning' || state === 'done') return;
+    state = 'burning';
+    hideHint();
+
+    match.classList.remove('is-lit');
+    match.classList.add('is-done');
+    matchFlameCv.style.opacity = '0';
+
+    initBurnField();
+    initFlameSlots();
+    fireCanvas.classList.add('is-active');
+
+    spawnSmoke(match.querySelector('.head'), 4);
+    setTimeout(function(){
+      match.style.transition = 'opacity .9s ease';
+      match.style.opacity = '0';
+    }, 500);
+
+    elapsed = 0;
+    lastTs = performance.now();
+    requestAnimationFrame(burnStep);
+  }
+
+  function burnStep(ts){
+    var dt = Math.min(0.045, (ts - lastTs) / 1000);
+    lastTs = ts;
+    elapsed += dt;
+
+    var minR = target;
+    for (var i=0;i<N;i++){
+      if (elapsed > delays[i] && radii[i] < target){
+        var wobble = Math.sin(elapsed*2.3 + i*0.7) * speeds[i] * 0.10;
+        radii[i] += (speeds[i] + wobble) * dt;
+        if (radii[i] < 0) radii[i] = 0;
+        if (radii[i] > target) radii[i] = target;
+      }
+      if (radii[i] < minR) minR = radii[i];
+    }
+    smoothRadii();
+    updateSparks(dt);
+
+    drawLidFrame();
+    drawFireFrame(dt);
+
+    var progress = 0;
+    for (var j=0;j<N;j++) progress += radii[j];
+    progress = progress / (N*target);
+    var p = progress.toFixed(3);
+    ambientGlow.style.setProperty('--glow', p);
+    boxInterior.style.setProperty('--reveal', p);
+
+    if ((minR >= target - 1 || elapsed >= MAX_DURATION) && !burnDone){
+      finishBurn();
+      return;
+    }
+    requestAnimationFrame(burnStep);
+  }
+
+  function finishBurn(){
+    burnDone = true;
+    for (var i=0;i<N;i++) radii[i] = target;
+    sparks.length = 0;
+    drawLidFrame();
+    state = 'done';
+    boxWrap.classList.add('is-revealed');
+    ambientGlow.style.setProperty('--glow', '1');
+    boxInterior.style.setProperty('--reveal', '1');
+
+    var fadeStart = performance.now();
+    (function fadeOut(){
+      var t = (performance.now() - fadeStart) / 1500;
+      drawFireFrame(0.016);
+      if (t < 1 && (embers.length || t < 0.4)){
+        requestAnimationFrame(fadeOut);
+      } else {
+        fireCanvas.classList.remove('is-active');
+        fctx.clearRect(0,0,fireCanvas.width,fireCanvas.height);
+      }
+    })();
+
+    setTimeout(function(){
+      ambientGlow.style.setProperty('--glow', '0.4');
+      startIdleFlicker();
+    }, 2000);
+  }
+
+  var idleFlickerT = 0;
+  function startIdleFlicker(){
+    (function tick(){
+      idleFlickerT += 0.033;
+      var f = 1 + Math.sin(idleFlickerT*2.1)*0.05 + Math.sin(idleFlickerT*5.3)*0.03;
+      document.documentElement.style.setProperty('--flicker', f.toFixed(3));
+      requestAnimationFrame(tick);
+    })();
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* init                                                               */
+  /* ---------------------------------------------------------------- */
+  function init(){
+    sizeCanvases();
+    placeMatchHome();
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>
