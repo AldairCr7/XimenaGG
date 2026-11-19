@@ -4,138 +4,168 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Un pequeño secreto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Pinyon+Script&family=Jost:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-1:#0f0b09;
-    --bg-2:#1c130d;
-    --kraft-hi:#caa46b;
-    --kraft-mid:#a97f45;
-    --kraft-lo:#7c5a30;
-    --paper:#e7d9ae;
-    --ink:#3a2510;
-    --rope:#6b4f28;
+    --ink:#6b4458;
+    --rose:#e9a9b8;
+    --rose-deep:#c46f88;
     --reveal:0;
     --glow:0;
     --flicker:1;
   }
 
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
   html,body{ height:100%; margin:0; overscroll-behavior:none; }
 
   body{
     min-height:100svh;
-    background:
-      radial-gradient(120% 90% at 50% 38%, #2a1c12 0%, var(--bg-2) 45%, var(--bg-1) 100%);
-    display:flex; align-items:center; justify-content:center;
     overflow:hidden;
-    font-family:'Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,'Times New Roman',serif;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond','Iowan Old Style',Georgia,serif;
+    color:var(--ink);
+    background:linear-gradient(165deg,#ebe0f3 0%,#f5dce6 46%,#fce6da 100%);
     touch-action:none;
     user-select:none; -webkit-user-select:none;
   }
 
-  body::before{
-    content:""; position:fixed; inset:0; pointer-events:none;
-    opacity:.045; mix-blend-mode:overlay;
-    background-image:
-      radial-gradient(circle at 20% 30%, #fff 0 .6px, transparent .6px),
-      radial-gradient(circle at 60% 70%, #fff 0 .5px, transparent .5px),
-      radial-gradient(circle at 80% 20%, #fff 0 .7px, transparent .7px);
-    background-size: 3px 3px, 4px 4px, 5px 5px;
+  /* soft drifting color clouds */
+  .blob{
+    position:fixed; border-radius:50%; pointer-events:none;
+    filter:blur(60px); opacity:.55;
+    animation:drift 18s ease-in-out infinite alternate;
+  }
+  .b1{ width:58vmax; height:58vmax; left:-18vmax; top:-22vmax; background:#e0cbf0; }
+  .b2{ width:52vmax; height:52vmax; right:-20vmax; bottom:-22vmax; background:#fdd3c4; animation-delay:-6s; }
+  .b3{ width:36vmax; height:36vmax; right:2vmax; top:-12vmax; background:#f8c6d4; animation-delay:-11s; opacity:.42; }
+  @keyframes drift{ to{ transform:translate(4vmax,3vmax) scale(1.08); } }
+
+  /* paper grain */
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:60;
+    opacity:.22; mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.55'/></svg>");
   }
 
   .ambient-glow{
-    position:fixed; inset:0; pointer-events:none;
-    background: radial-gradient(40% 34% at 50% 48%,
-      rgba(255,150,60, calc((0.09 + var(--glow) * 0.32) * var(--flicker))) 0%,
-      rgba(255,110,40, calc((0.035 + var(--glow) * 0.16) * var(--flicker))) 42%,
-      transparent 74%);
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background:radial-gradient(46% 40% at 50% 46%,
+      rgba(255,190,170, calc((0.0 + var(--glow) * 0.45) * var(--flicker))) 0%,
+      rgba(246,160,185, calc((0.0 + var(--glow) * 0.22) * var(--flicker))) 45%,
+      transparent 75%);
   }
+
+  #bokeh{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+  #fx{ position:fixed; inset:0; z-index:50; pointer-events:none; }
 
   .scene{
-    position:relative;
-    width:min(92vw, 480px);
-    height:min(80svh, 640px);
+    position:relative; z-index:2;
+    width:min(94vw, 680px);
+    height:min(92svh, 780px);
     display:flex; flex-direction:column;
     align-items:center; justify-content:center;
-    gap:clamp(30px, 6svh, 58px);
   }
 
-  .hint{
-    position:absolute; top:9%; left:50%;
-    transform:translateX(-50%);
-    font-size:clamp(12px,2.6vw,14px);
-    letter-spacing:.14em; text-transform:uppercase;
-    color:#c9a876; opacity:.75;
-    font-style:italic;
-    transition:opacity .9s ease;
-    pointer-events:none; white-space:nowrap;
-  }
-  .hint.is-hidden{ opacity:0; }
-
-  /* ===================== BOX (never burns — only the lid does) ===================== */
+  /* ===================== BOX ===================== */
   .box-wrap{
     position:relative;
-    width:clamp(196px, 48vw, 280px);
-    aspect-ratio: 5 / 4;
+    width:min(86vw, 560px);
+    aspect-ratio:4 / 3;
   }
 
   .box-body{
     position:relative;
     width:100%; height:100%;
-    padding:clamp(11px, 3.6%, 17px);
-    border-radius:7px;
+    padding:clamp(11px, 2.8%, 17px);
+    border-radius:18px;
     background:
-      repeating-linear-gradient(112deg, rgba(255,255,255,.05) 0 2px, transparent 2px 7px),
-      linear-gradient(160deg, var(--kraft-hi) 0%, var(--kraft-mid) 52%, var(--kraft-lo) 100%);
+      linear-gradient(150deg,#fffaf7 0%,#fbeef0 55%,#f3dde4 100%);
     box-shadow:
-      inset 0 2px 3px rgba(255,255,255,.30),
-      inset 0 -14px 20px rgba(35,20,8,.5),
-      0 20px 36px rgba(0,0,0,.55);
+      inset 0 1px 0 #fff,
+      inset 0 -12px 24px rgba(201,120,142,.12),
+      0 26px 50px rgba(150,86,112,.22),
+      0 6px 14px rgba(150,86,112,.10);
   }
   .box-body::after{
-    content:"";
-    position:absolute; inset:4px;
-    border-radius:5px;
-    box-shadow: inset 0 0 0 1px rgba(60,38,16,.35);
+    content:""; position:absolute; inset:5px;
+    border-radius:13px;
+    border:1px solid rgba(206,150,140,.5);
     pointer-events:none;
   }
 
   .box-interior{
     position:relative;
     width:100%; height:100%;
-    border-radius:3px;
+    border-radius:11px;
     overflow:hidden;
-    background: radial-gradient(120% 120% at 50% 28%, #241407 0%, #150c05 68%, #0d0704 100%);
-    box-shadow: inset 0 8px 16px rgba(0,0,0,.75), inset 0 0 0 1px rgba(0,0,0,.35);
+    background:radial-gradient(120% 100% at 50% 40%, #fffaf6 0%, #fbe9ec 55%, #f2d4de 100%);
+    box-shadow:inset 0 2px 12px rgba(150,90,110,.18);
   }
   .box-interior::before{
     content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
-    background: radial-gradient(46% 42% at 50% 58%,
-      rgba(255,158,64, calc(.05 + var(--reveal) * .62)) 0%,
-      rgba(255,110,40, calc(.02 + var(--reveal) * .26)) 46%,
-      transparent 75%);
-    transition: background .25s linear;
+    background:radial-gradient(50% 46% at 50% 52%,
+      rgba(255,228,214, calc(var(--reveal) * .75)) 0%,
+      rgba(250,196,210, calc(var(--reveal) * .30)) 50%,
+      transparent 78%);
   }
+
+  .floral-detail{
+    position:absolute; inset:3.5%; z-index:1; width:93%; height:93%;
+    overflow:visible; pointer-events:none;
+    opacity:.9;
+    transition:opacity 1.6s ease, transform 2.4s cubic-bezier(.2,.7,.2,1);
+  }
+  .box-wrap.is-revealed .floral-detail{ opacity:1; transform:scale(1.03); }
+  .floral-detail .stem{ fill:none; stroke:#a9bca3; stroke-width:1.3; stroke-linecap:round; opacity:.85; }
+  .floral-detail .leaf{ fill:#c5d6bd; stroke:#a9bca3; stroke-width:.6; opacity:.9; }
+  .floral-detail .rose-petal{ fill:#f6bfcb; stroke:#fbdbe2; stroke-width:.8; }
+  .floral-detail .rose-shadow{ fill:#eaa2b5; stroke:#f4c0cc; stroke-width:.6; }
+  .floral-detail .rose-core{ fill:#fde3da; }
+  .floral-detail .bud{ fill:#d9c6ec; }
+  .floral-detail .dot{ fill:#efb3c2; opacity:.7; }
 
   .box-text{
     position:absolute; inset:0; z-index:2;
-    display:flex; align-items:center; justify-content:center;
-    text-align:center; padding:11%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(8px, 2.2vw, 14px);
+    text-align:center; padding:8% 9%;
+    text-wrap:balance;
   }
-  .box-text span{
-    font-family:'Big Caslon','Iowan Old Style','Palatino Linotype',Georgia,serif;
-    font-style:italic;
-    font-size:clamp(16px, 4.4vw, 22px);
-    line-height:1.42; letter-spacing:.02em;
-    color:#f1dfb8;
-    text-shadow: 0 0 0 rgba(255,180,90,0);
-    transition: text-shadow 1.6s ease, color 1.6s ease;
+  .box-text .date{
+    font:500 clamp(9px,2.1vw,11px)/1.3 'Jost',Arial,sans-serif;
+    text-transform:uppercase; letter-spacing:.32em;
+    color:#bd8798;
   }
-  .box-wrap.is-revealed .box-text span{
-    color:#fff2d2;
-    text-shadow: 0 0 18px rgba(255,175,90,.65), 0 0 42px rgba(255,140,60,.35);
+  .box-text .ornament{ width:clamp(70px,18vw,96px); height:auto; }
+  .box-text .msg{
+    margin:0;
+    font-style:italic; font-weight:500;
+    font-size:clamp(17px, 4.4vw, 29px);
+    line-height:1.42;
+    color:#6b4458;
   }
+  .box-text .nw{ white-space:nowrap; }
+  .box-text .name{
+    font-family:'Pinyon Script','Snell Roundhand',cursive;
+    font-style:normal; font-weight:400;
+    font-size:1.38em; line-height:1;
+    color:var(--rose-deep);
+    padding:0 .04em;
+  }
+  .box-wrap.is-revealed .box-text .msg{
+    text-shadow:0 0 18px rgba(255,214,222,.9), 0 0 40px rgba(246,170,190,.35);
+  }
+
+  .word{
+    display:inline-block;
+    opacity:0;
+    filter:blur(8px);
+    transform:translateY(8px);
+    transition:opacity 1.2s ease, filter 1.4s ease, transform 1.4s cubic-bezier(.2,.7,.2,1);
+  }
+  .word.on{ opacity:1; filter:blur(0); transform:none; }
 
   .lid-canvas{
     position:absolute; inset:0; z-index:3;
@@ -145,37 +175,52 @@
   .fire-canvas{
     position:absolute;
     left:-18%; right:-18%;
-    top:-62%; bottom:0;
+    top:-68%; bottom:-6%;
     z-index:5;
     pointer-events:none;
     opacity:0;
-    transition: opacity 1.2s ease;
-    filter: drop-shadow(0 0 9px rgba(255,130,50,.35));
+    transition:opacity 1.2s ease;
   }
   .fire-canvas.is-active{ opacity:1; }
 
-  /* ===================== MATCH ===================== */
+  /* ===================== MATCH & MATCHBOX ===================== */
   .match-zone{
     position:relative; width:100%;
-    height:clamp(74px, 12svh, 100px);
+    height:clamp(100px, 14svh, 120px);
+    margin-top:clamp(20px, 4svh, 38px);
+    transition:height 1.1s cubic-bezier(.4,0,.2,1), margin 1.1s cubic-bezier(.4,0,.2,1), opacity .8s ease;
+  }
+  .match-zone.gone, .hint.gone{ height:0; margin:0; opacity:0; }
+
+  .matchbox{
+    position:absolute; left:50%; bottom:6px;
+    transform:translateX(-50%);
+    width:clamp(96px, 26vw, 124px); height:42px;
+    border-radius:7px;
+    background:linear-gradient(180deg,#f9d4dd 0%,#efb6c5 100%);
+    box-shadow:0 10px 20px rgba(160,90,115,.22), inset 0 1px 0 rgba(255,255,255,.65), inset 0 -3px 6px rgba(170,90,115,.15);
+  }
+  .matchbox .label{
+    position:absolute; inset:10px 9px 7px;
+    border-radius:4px;
+    background:#fff6f3;
+    box-shadow:inset 0 0 0 1px rgba(201,120,142,.25);
     display:flex; align-items:center; justify-content:center;
   }
-
-  .strike-strip{
-    position:absolute; left:50%; bottom:2px;
-    transform:translateX(-50%);
-    width:clamp(80px, 24vw, 108px); height:16px;
-    border-radius:3px;
+  .matchbox .label svg{ width:14px; height:14px; }
+  .strike{
+    position:absolute; left:3px; right:3px; top:-9px; height:10px;
+    border-radius:4px 4px 1px 1px;
     background:
-      repeating-linear-gradient(100deg, rgba(0,0,0,.14) 0 2px, transparent 2px 4px),
-      linear-gradient(180deg,#5c3a26,#43281a);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,.5), 0 1px 1px rgba(255,255,255,.05);
+      repeating-linear-gradient(90deg, rgba(0,0,0,.13) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg,#b07a89,#8d5b6b);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.25);
   }
 
   .match{
-    position:absolute; left:50%; top:0;
+    position:absolute; left:0; top:0;
     width:16px; height:100px;
-    transform: translate(-50%, 0) rotate(4deg);
+    transform-origin:50% 70%;
     cursor:grab; touch-action:none; z-index:10;
   }
   .match.is-dragging{ cursor:grabbing; }
@@ -183,20 +228,21 @@
 
   .match .stick{
     position:absolute; left:50%; bottom:0;
-    width:4px; height:80px; transform:translateX(-50%);
-    background: linear-gradient(90deg,#c99a5b,#e3bb80 40%,#c99a5b);
+    width:4.5px; height:82px; transform:translateX(-50%);
+    background:linear-gradient(90deg,#d9bfa6,#f5e6d3 45%,#d4b89f);
     border-radius:2px;
+    box-shadow:0 4px 8px rgba(130,80,90,.18);
   }
   .match .head{
     position:absolute; left:50%; top:0;
-    width:15px; height:21px; transform:translateX(-50%);
-    background: radial-gradient(circle at 35% 25%, #a8402c, #6b1d14 75%);
-    border-radius:45% 45% 40% 40%;
-    box-shadow: inset -2px -2px 3px rgba(0,0,0,.4);
-    transition: background .2s ease;
+    width:13px; height:19px; transform:translateX(-50%);
+    background:radial-gradient(circle at 35% 28%, #f6aabd, #cf6683 72%);
+    border-radius:46% 46% 40% 40%;
+    box-shadow:inset -2px -2px 3px rgba(120,30,60,.25);
+    transition:background .25s ease;
   }
   .match.is-lit .head{
-    background: radial-gradient(circle at 35% 25%, #6b1d14, #2a0d09 75%);
+    background:radial-gradient(circle at 35% 28%, #7b4049, #3d2028 75%);
   }
 
   .match-flame-canvas{
@@ -207,80 +253,166 @@
     pointer-events:none;
     opacity:0;
     transition:opacity .25s ease;
-    filter: drop-shadow(0 0 5px rgba(255,150,60,.55));
   }
   .match.is-lit .match-flame-canvas{ opacity:1; }
 
+  .hint{
+    margin:14px 0 0;
+    height:20px;
+    font:500 clamp(10px,2.3vw,12px)/20px 'Jost',Arial,sans-serif;
+    letter-spacing:.24em; text-transform:uppercase;
+    color:#a97a8d;
+    text-align:center; white-space:nowrap;
+    animation:breathe 2.8s ease-in-out infinite;
+    transition:opacity .9s ease, height 1.1s ease, margin 1.1s ease;
+    pointer-events:none;
+  }
+  .hint.is-hidden{ opacity:0 !important; animation:none; }
+  @keyframes breathe{ 0%,100%{ opacity:.55; } 50%{ opacity:.95; } }
+
   .smoke{
     position:absolute; width:10px; height:10px; border-radius:50%;
-    background: radial-gradient(circle, rgba(210,205,195,.55), rgba(210,205,195,0) 70%);
+    background:radial-gradient(circle, rgba(255,250,250,.7), rgba(255,250,250,0) 70%);
     pointer-events:none; z-index:9;
-    animation: smokeRise 1.8s ease-out forwards;
-    filter: blur(1px);
+    animation:smokeRise 1.8s ease-out forwards;
+    filter:blur(1px);
   }
   @keyframes smokeRise{
-    0%{ opacity:.55; transform: translate(0,0) scale(1); }
-    100%{ opacity:0; transform: translate(var(--dx,10px), -60px) scale(2.6); }
+    0%{ opacity:.6; transform:translate(0,0) scale(1); }
+    100%{ opacity:0; transform:translate(var(--dx,10px), -60px) scale(2.6); }
   }
 </style>
 </head>
 <body>
 
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <canvas id="bokeh"></canvas>
   <div class="ambient-glow" id="ambientGlow"></div>
 
   <div class="scene" id="scene">
-    <p class="hint" id="hint">Enciéndelo&hellip;</p>
 
     <div class="box-wrap" id="boxWrap">
       <canvas class="fire-canvas" id="fireCanvas"></canvas>
       <div class="box-body">
         <div class="box-interior" id="boxInterior">
-          <div class="box-text" id="boxText"><span>Eres especial para mí.</span></div>
+          <svg class="floral-detail" viewBox="0 0 420 310" aria-hidden="true">
+            <g class="stem">
+              <path d="M82 76 C91 105 109 116 127 134 C145 151 154 174 157 202"/>
+              <path d="M338 234 C326 209 310 197 292 180 C277 166 267 145 263 119"/>
+              <path d="M110 120 C96 128 92 140 94 152"/>
+              <path d="M312 190 C326 182 330 170 328 158"/>
+            </g>
+            <g class="leaf">
+              <path d="M105 111 C85 98 80 84 84 70 C101 76 111 89 105 111Z"/>
+              <path d="M132 147 C145 126 161 122 174 127 C165 144 152 152 132 147Z"/>
+              <path d="M150 182 C138 168 138 156 144 148 C154 158 156 170 150 182Z"/>
+              <path d="M318 205 C337 192 342 178 338 165 C321 171 312 184 318 205Z"/>
+              <path d="M292 170 C278 149 262 145 250 150 C259 167 272 175 292 170Z"/>
+              <path d="M270 132 C282 120 282 108 276 100 C266 110 264 122 270 132Z"/>
+            </g>
+            <circle class="bud" cx="94" cy="155" r="5"/>
+            <circle class="bud" cx="328" cy="155" r="4.5"/>
+            <circle class="dot" cx="60" cy="118" r="2"/>
+            <circle class="dot" cx="122" cy="52" r="1.6"/>
+            <circle class="dot" cx="360" cy="200" r="2"/>
+            <circle class="dot" cx="300" cy="262" r="1.6"/>
+            <g transform="translate(78 70)">
+              <circle class="rose-shadow" r="19"/>
+              <ellipse class="rose-petal" cx="0" cy="-8" rx="7" ry="10"/>
+              <ellipse class="rose-petal" cx="8" cy="-2" rx="7" ry="10" transform="rotate(58 8 -2)"/>
+              <ellipse class="rose-petal" cx="5" cy="7" rx="7" ry="10" transform="rotate(126 5 7)"/>
+              <ellipse class="rose-petal" cx="-5" cy="7" rx="7" ry="10" transform="rotate(-126 -5 7)"/>
+              <ellipse class="rose-petal" cx="-8" cy="-2" rx="7" ry="10" transform="rotate(-58 -8 -2)"/>
+              <path class="rose-core" d="M-5 -1 C-6 -7 2 -9 5 -4 C10 -1 7 5 2 6 C-3 8 -8 4 -5 -1Z"/>
+            </g>
+            <g transform="translate(342 240) scale(.86)">
+              <circle class="rose-shadow" r="19"/>
+              <ellipse class="rose-petal" cx="0" cy="-8" rx="7" ry="10"/>
+              <ellipse class="rose-petal" cx="8" cy="-2" rx="7" ry="10" transform="rotate(58 8 -2)"/>
+              <ellipse class="rose-petal" cx="5" cy="7" rx="7" ry="10" transform="rotate(126 5 7)"/>
+              <ellipse class="rose-petal" cx="-5" cy="7" rx="7" ry="10" transform="rotate(-126 -5 7)"/>
+              <ellipse class="rose-petal" cx="-8" cy="-2" rx="7" ry="10" transform="rotate(-58 -8 -2)"/>
+              <path class="rose-core" d="M-5 -1 C-6 -7 2 -9 5 -4 C10 -1 7 5 2 6 C-3 8 -8 4 -5 -1Z"/>
+            </g>
+          </svg>
+
+          <div class="box-text" id="boxText">
+            <small class="date word">26 de noviembre de 2026</small>
+            <svg class="ornament word" viewBox="0 0 120 16" aria-hidden="true">
+              <line x1="4" y1="8" x2="46" y2="8" stroke="#e3a7b7" stroke-width="1" stroke-linecap="round"/>
+              <line x1="74" y1="8" x2="116" y2="8" stroke="#e3a7b7" stroke-width="1" stroke-linecap="round"/>
+              <path d="M60 13.5 C51 8 52 2.5 56 2.5 C58 2.5 59.4 3.8 60 5.2 C60.6 3.8 62 2.5 64 2.5 C68 2.5 69 8 60 13.5Z" fill="#e9a3b6"/>
+            </svg>
+            <p class="msg" data-split>Hoy cumplimos 3 meses, <span class="nw"><em class="name">Ximena</em>.</span><br>Gracias por dejarme ser tu mandilón.</p>
+          </div>
+
           <canvas class="lid-canvas" id="lidCanvas"></canvas>
         </div>
       </div>
     </div>
 
     <div class="match-zone" id="matchZone">
-      <div class="strike-strip" id="strikeStrip"></div>
+      <div class="matchbox" id="matchbox">
+        <div class="strike" id="strike"></div>
+        <div class="label">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C3 14.5 3.5 6 8 6 C10 6 11.3 7.3 12 8.8 C12.7 7.3 14 6 16 6 C20.5 6 21 14.5 12 21Z" fill="#e79bb0"/></svg>
+        </div>
+      </div>
       <div class="match" id="match">
         <div class="stick"></div>
         <div class="head"></div>
         <canvas class="match-flame-canvas" id="matchFlameCanvas"></canvas>
       </div>
     </div>
+
+    <p class="hint" id="hint">Arrastra el fósforo para descubrirla</p>
   </div>
+
+  <canvas id="fx"></canvas>
 
 <script>
 (function(){
   "use strict";
 
-  var scene        = document.getElementById('scene');
-  var hint         = document.getElementById('hint');
-  var boxWrap      = document.getElementById('boxWrap');
-  var boxInterior  = document.getElementById('boxInterior');
-  var lidCanvas    = document.getElementById('lidCanvas');
-  var fireCanvas   = document.getElementById('fireCanvas');
-  var matchZone    = document.getElementById('matchZone');
-  var strikeStrip  = document.getElementById('strikeStrip');
-  var match        = document.getElementById('match');
-  var matchFlameCv = document.getElementById('matchFlameCanvas');
-  var ambientGlow  = document.getElementById('ambientGlow');
+  function $(id){ return document.getElementById(id); }
+  var hint         = $('hint');
+  var boxWrap      = $('boxWrap');
+  var boxInterior  = $('boxInterior');
+  var boxText      = $('boxText');
+  var lidCanvas    = $('lidCanvas');
+  var fireCanvas   = $('fireCanvas');
+  var matchZone    = $('matchZone');
+  var matchbox     = $('matchbox');
+  var strike       = $('strike');
+  var match        = $('match');
+  var matchFlameCv = $('matchFlameCanvas');
+  var ambientGlow  = $('ambientGlow');
+  var fxCv         = $('fx');
+  var bokehCv      = $('bokeh');
 
   var lctx = lidCanvas.getContext('2d');
   var fctx = fireCanvas.getContext('2d');
   var mctx = matchFlameCv.getContext('2d');
+  var xctx = fxCv.getContext('2d');
+  var bctx = bokehCv.getContext('2d');
 
-  var state = 'idle'; // idle -> lit -> burning -> done
+  var state = 'idle'; // idle -> lit -> kindling -> burning -> done
   var dragging = false;
   var matchPos = { x:0, y:0 };
   var homePos  = { x:0, y:0 };
-  var curRotation = 4;
+  var curRotation = 8;
 
-  var DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function clamp(v,a,b){ return v < a ? a : (v > b ? b : v); }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function easeInOutCubic(t){ return t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+  function gauss(t,c,w){ var d=(t-c)/w; return Math.exp(-d*d); }
 
   /* ---------------------------------------------------------------- */
-  /* generic flame-tongue renderer, reused for both the match & fire  */
+  /* flame renderer (match + fire)                                     */
   /* ---------------------------------------------------------------- */
   function flamePath(ctx, cx, baseY, w, h, lean){
     var topX = cx + lean;
@@ -301,48 +433,63 @@
 
     flamePath(ctx, cx, baseY, w, h, lean);
     var g1 = ctx.createLinearGradient(cx, baseY, cx, baseY - h);
-    g1.addColorStop(0,   'rgba(255,120,40,.95)');
-    g1.addColorStop(0.5, 'rgba(255,150,40,.85)');
-    g1.addColorStop(1,   'rgba(255,120,40,0)');
+    g1.addColorStop(0,   'rgba(255,124,104,.95)');
+    g1.addColorStop(0.42,'rgba(255,168,128,.86)');
+    g1.addColorStop(0.78,'rgba(255,206,170,.42)');
+    g1.addColorStop(1,   'rgba(255,190,160,0)');
     ctx.fillStyle = g1;
     ctx.fill();
 
     flamePath(ctx, cx, baseY - h*0.03, w*0.56, h*0.72, lean*0.7);
     var g2 = ctx.createLinearGradient(cx, baseY, cx, baseY - h*0.72);
-    g2.addColorStop(0,   'rgba(255,225,140,.98)');
-    g2.addColorStop(0.55,'rgba(255,190,70,.9)');
-    g2.addColorStop(1,   'rgba(255,150,40,0)');
+    g2.addColorStop(0,   'rgba(255,238,210,.98)');
+    g2.addColorStop(0.52,'rgba(255,210,160,.9)');
+    g2.addColorStop(1,   'rgba(255,170,130,0)');
     ctx.fillStyle = g2;
     ctx.fill();
 
     ctx.beginPath();
     ctx.ellipse(cx + lean*0.15, baseY - h*0.10, w*0.20, h*0.16, 0, 0, Math.PI*2);
     var g3 = ctx.createRadialGradient(cx,baseY-h*0.10,0, cx,baseY-h*0.10,w*0.20);
-    g3.addColorStop(0,'rgba(255,248,220,.95)');
-    g3.addColorStop(1,'rgba(255,248,220,0)');
+    g3.addColorStop(0,'rgba(255,250,235,.98)');
+    g3.addColorStop(1,'rgba(255,236,200,0)');
     ctx.fillStyle = g3;
+    ctx.fill();
+
+    flamePath(ctx, cx - w*0.06 + lean*0.45, baseY - h*0.08, w*0.25, h*0.48, lean*0.28);
+    var g4 = ctx.createLinearGradient(cx, baseY, cx, baseY - h*0.56);
+    g4.addColorStop(0,'rgba(255,242,215,.78)');
+    g4.addColorStop(1,'rgba(255,210,150,0)');
+    ctx.fillStyle = g4;
     ctx.fill();
 
     ctx.restore();
   }
 
+  function heartPath(c, x, y, s){
+    c.beginPath();
+    c.moveTo(x, y + s*0.9);
+    c.bezierCurveTo(x - s*1.6, y - s*0.1, x - s*0.9, y - s*1.25, x, y - s*0.45);
+    c.bezierCurveTo(x + s*0.9, y - s*1.25, x + s*1.6, y - s*0.1, x, y + s*0.9);
+    c.closePath();
+  }
+
   /* ---------------------------------------------------------------- */
   /* match flame                                                       */
   /* ---------------------------------------------------------------- */
-  var matchFlameT = 0;
-  var matchFlameRAF = null;
+  var matchFlameT = 0, matchFlameRAF = null;
 
   function sizeMatchFlameCanvas(){
     var r = matchFlameCv.getBoundingClientRect();
-    matchFlameCv.width  = Math.round(r.width * DPR);
-    matchFlameCv.height = Math.round(r.height * DPR);
+    matchFlameCv.width  = Math.max(1, Math.round(44 * DPR));
+    matchFlameCv.height = Math.max(1, Math.round(56 * DPR));
     mctx.setTransform(DPR,0,0,DPR,0,0);
   }
 
   function matchFlameLoop(){
     if (state !== 'lit'){ matchFlameRAF = null; return; }
     matchFlameT += 0.016;
-    var w = matchFlameCv.width/DPR, h = matchFlameCv.height/DPR;
+    var w = 44, h = 56;
     mctx.clearRect(0,0,w,h);
     var lean = Math.sin(matchFlameT*5.2)*3 + Math.sin(matchFlameT*1.6)*1.4;
     var hVar = 1 + Math.sin(matchFlameT*7.1)*0.06;
@@ -356,38 +503,122 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* lid paper texture                                                  */
+  /* lid: blush paper, satin ribbon, wax-seal heart                    */
   /* ---------------------------------------------------------------- */
   var paperPattern = null;
 
   function buildPaperPattern(w, h){
     var pc = document.createElement('canvas');
-    pc.width = Math.max(1,w); pc.height = Math.max(1,h);
-    var pctx = pc.getContext('2d');
-    var g = pctx.createLinearGradient(0,0,w,h);
-    g.addColorStop(0, '#eadcae');
-    g.addColorStop(1, '#cdb883');
-    pctx.fillStyle = g;
-    pctx.fillRect(0,0,w,h);
-    pctx.globalAlpha = .08;
-    for (var i=0;i<220;i++){
-      pctx.fillStyle = (i % 2 === 0) ? '#000' : '#fff';
-      var rx = Math.random()*w, ry = Math.random()*h, rr = Math.random()*1.3+.3;
-      pctx.beginPath();
-      pctx.ellipse(rx, ry, rr, rr*0.6, Math.random()*Math.PI, 0, Math.PI*2);
-      pctx.fill();
-    }
-    pctx.globalAlpha = 1;
+    pc.width = Math.max(1, Math.round(w*DPR));
+    pc.height = Math.max(1, Math.round(h*DPR));
+    var p = pc.getContext('2d');
+    p.scale(DPR, DPR);
 
-    pctx.strokeStyle = '#6b4f28';
-    pctx.lineWidth = Math.max(2, w*0.022);
-    pctx.lineCap = 'round';
-    pctx.beginPath(); pctx.moveTo(w/2, h*0.02); pctx.lineTo(w/2, h*0.98); pctx.stroke();
-    pctx.beginPath(); pctx.moveTo(w*0.02, h/2); pctx.lineTo(w*0.98, h/2); pctx.stroke();
-    pctx.fillStyle = '#7a5c33';
-    pctx.beginPath();
-    pctx.ellipse(w/2, h/2, w*0.032, h*0.024, -0.15, 0, Math.PI*2);
-    pctx.fill();
+    var g = p.createLinearGradient(0,0,w,h);
+    g.addColorStop(0,  '#fff6f1');
+    g.addColorStop(.55,'#fae5e8');
+    g.addColorStop(1,  '#f1d3dc');
+    p.fillStyle = g;
+    p.fillRect(0,0,w,h);
+
+    // fibres
+    p.lineCap = 'round';
+    for (var i=0;i<650;i++){
+      p.globalAlpha = .04 + Math.random()*.05;
+      p.strokeStyle = (i % 3 === 0) ? '#ffffff' : '#a5707f';
+      p.lineWidth = .5 + Math.random()*.6;
+      var fx = Math.random()*w, fy = Math.random()*h, fa = Math.random()*Math.PI, fl = 2 + Math.random()*6;
+      p.beginPath();
+      p.moveTo(fx, fy);
+      p.lineTo(fx + Math.cos(fa)*fl, fy + Math.sin(fa)*fl);
+      p.stroke();
+    }
+    p.globalAlpha = 1;
+
+    // frame
+    p.strokeStyle = 'rgba(206,146,152,.55)';
+    p.lineWidth = 1;
+    p.strokeRect(w*.03, h*.04, w*.94, h*.92);
+    p.strokeStyle = 'rgba(255,255,255,.85)';
+    p.strokeRect(w*.03+3, h*.04+3, w*.94-6, h*.92-6);
+
+    // satin ribbon
+    var rw = Math.max(14, w*.068);
+    p.save();
+    p.shadowColor = 'rgba(160,84,108,.22)';
+    p.shadowBlur = 8;
+    p.shadowOffsetY = 2;
+    var rgV = p.createLinearGradient(w/2 - rw/2, 0, w/2 + rw/2, 0);
+    var rgH = p.createLinearGradient(0, h/2 - rw/2, 0, h/2 + rw/2);
+    [rgV, rgH].forEach(function(rg){
+      rg.addColorStop(0,  '#e8adbd');
+      rg.addColorStop(.28,'#f6cbd6');
+      rg.addColorStop(.5, '#fde6ec');
+      rg.addColorStop(.72,'#f3c0cd');
+      rg.addColorStop(1,  '#e1a1b3');
+    });
+    p.fillStyle = rgH; p.fillRect(0, h/2 - rw/2, w, rw);
+    p.fillStyle = rgV; p.fillRect(w/2 - rw/2, 0, rw, h);
+    p.restore();
+    p.strokeStyle = 'rgba(196,112,138,.35)';
+    p.lineWidth = .8;
+    p.beginPath();
+    p.moveTo(0, h/2 - rw/2 + 2); p.lineTo(w, h/2 - rw/2 + 2);
+    p.moveTo(0, h/2 + rw/2 - 2); p.lineTo(w, h/2 + rw/2 - 2);
+    p.moveTo(w/2 - rw/2 + 2, 0); p.lineTo(w/2 - rw/2 + 2, h);
+    p.moveTo(w/2 + rw/2 - 2, 0); p.lineTo(w/2 + rw/2 - 2, h);
+    p.stroke();
+
+    // wax seal
+    var cx = w/2, cy = h/2, R = Math.min(w,h)*.105;
+    var pts = [], K = 26;
+    for (var k=0;k<K;k++){
+      var a = k/K*Math.PI*2;
+      var rr = R*(1 + (Math.random()-.5)*.14);
+      pts.push([cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]);
+    }
+    p.save();
+    p.shadowColor = 'rgba(120,40,70,.35)';
+    p.shadowBlur = 10; p.shadowOffsetY = 3;
+    p.beginPath();
+    for (var q=0;q<K;q++){
+      var c0 = pts[q], c1 = pts[(q+1)%K];
+      var mx = (c0[0]+c1[0])/2, my = (c0[1]+c1[1])/2;
+      if (q === 0) p.moveTo(mx, my); else p.quadraticCurveTo(c0[0], c0[1], mx, my);
+    }
+    p.quadraticCurveTo(pts[0][0], pts[0][1], (pts[0][0]+pts[1][0])/2, (pts[0][1]+pts[1][1])/2);
+    p.closePath();
+    var wg = p.createRadialGradient(cx - R*.35, cy - R*.4, R*.1, cx, cy, R*1.15);
+    wg.addColorStop(0, '#f0aabb');
+    wg.addColorStop(.5,'#d57a92');
+    wg.addColorStop(1, '#b05671');
+    p.fillStyle = wg;
+    p.fill();
+    p.restore();
+
+    p.beginPath();
+    p.arc(cx, cy, R*.72, 0, Math.PI*2);
+    p.strokeStyle = 'rgba(130,40,70,.28)';
+    p.lineWidth = Math.max(1, R*.07);
+    p.stroke();
+    p.beginPath();
+    p.arc(cx - 1, cy - 1, R*.72, Math.PI*1.05, Math.PI*1.7);
+    p.strokeStyle = 'rgba(255,225,232,.45)';
+    p.lineWidth = Math.max(1, R*.05);
+    p.stroke();
+
+    heartPath(p, cx + 1, cy + R*.06 + 1, R*.40);
+    p.fillStyle = 'rgba(120,36,64,.35)';
+    p.fill();
+    heartPath(p, cx, cy + R*.06, R*.40);
+    var hg = p.createLinearGradient(cx, cy - R*.4, cx, cy + R*.4);
+    hg.addColorStop(0, '#eb9fb2');
+    hg.addColorStop(1, '#c4627e');
+    p.fillStyle = hg;
+    p.fill();
+    p.strokeStyle = 'rgba(255,228,235,.5)';
+    p.lineWidth = 1;
+    p.stroke();
 
     return pc;
   }
@@ -396,10 +627,23 @@
   /* sizing                                                             */
   /* ---------------------------------------------------------------- */
   var boxW = 0, boxH = 0;
+  var burnCenterX = 0, burnCenterY = 0;
   var fireOffsetX = 0, fireOffsetY = 0;
+  var fxW = 0, fxH = 0;
+
+  function sizeFx(){
+    fxW = window.innerWidth; fxH = window.innerHeight;
+    [[fxCv, xctx], [bokehCv, bctx]].forEach(function(pair){
+      pair[0].width = Math.round(fxW*DPR);
+      pair[0].height = Math.round(fxH*DPR);
+      pair[0].style.width = fxW + 'px';
+      pair[0].style.height = fxH + 'px';
+      pair[1].setTransform(DPR,0,0,DPR,0,0);
+    });
+  }
 
   function sizeCanvases(){
-    if (state === 'burning' || state === 'done') return;
+    if (state === 'kindling' || state === 'burning' || state === 'done') return;
     var r = boxInterior.getBoundingClientRect();
     boxW = r.width; boxH = r.height;
 
@@ -419,19 +663,20 @@
     fireOffsetX = r.left - fr.left;
     fireOffsetY = r.top - fr.top;
 
-    paperPattern = buildPaperPattern(Math.round(boxW), Math.round(boxH));
+    paperPattern = buildPaperPattern(boxW, boxH);
     lctx.clearRect(0,0,boxW,boxH);
     lctx.drawImage(paperPattern, 0, 0, boxW, boxH);
   }
 
   function placeMatchHome(){
     var zr = matchZone.getBoundingClientRect();
-    var mr = match.getBoundingClientRect();
-    homePos.x = (zr.width - mr.width) / 2 - 46;
-    homePos.y = 4;
-    if (!dragging && state !== 'burning' && state !== 'done'){
+    var br = matchbox.getBoundingClientRect();
+    homePos.x = Math.min(zr.width - 26, (br.right - zr.left) + 22);
+    homePos.y = Math.max(0, zr.height - 104);
+    if (!dragging && (state === 'idle' || state === 'lit')){
       matchPos.x = homePos.x;
       matchPos.y = homePos.y;
+      curRotation = 8;
       applyMatchTransform();
     }
   }
@@ -441,22 +686,24 @@
   }
 
   window.addEventListener('resize', function(){
+    sizeFx();
     sizeCanvases();
     placeMatchHome();
     if (state === 'lit') sizeMatchFlameCanvas();
   });
 
   /* ---------------------------------------------------------------- */
-  /* dragging the match (mouse + touch, unified via Pointer Events)    */
+  /* dragging                                                           */
   /* ---------------------------------------------------------------- */
   var pointerStart = { x:0, y:0 };
   var matchStart   = { x:0, y:0 };
 
   match.addEventListener('pointerdown', function(e){
-    if (state === 'burning' || state === 'done') return;
+    if (state !== 'idle' && state !== 'lit') return;
+    e.preventDefault();
     dragging = true;
     match.classList.add('is-dragging');
-    match.setPointerCapture(e.pointerId);
+    try { match.setPointerCapture(e.pointerId); } catch(err){}
     pointerStart.x = e.clientX; pointerStart.y = e.clientY;
     matchStart.x = matchPos.x; matchStart.y = matchPos.y;
     hideHint();
@@ -468,7 +715,7 @@
     var dy = e.clientY - pointerStart.y;
     matchPos.x = matchStart.x + dx;
     matchPos.y = matchStart.y + dy;
-    curRotation = Math.max(-18, Math.min(18, dx * 0.06)) + 4;
+    curRotation = clamp(dx * 0.06, -18, 18) + 4;
     applyMatchTransform();
     checkStrike();
     checkIgniteBox();
@@ -492,14 +739,13 @@
 
   function checkStrike(){
     if (state !== 'idle') return;
-    if (rectsOverlap(getHeadRect(), strikeStrip.getBoundingClientRect())) igniteMatch();
+    if (rectsOverlap(getHeadRect(), strike.getBoundingClientRect())) igniteMatch();
   }
 
   function igniteMatch(){
     if (state !== 'idle') return;
     state = 'lit';
     match.classList.add('is-lit');
-    hideHint();
     startMatchFlame();
   }
 
@@ -507,12 +753,9 @@
     if (state !== 'lit') return;
     var head = getHeadRect();
     var box = boxInterior.getBoundingClientRect();
-    var margin = box.width * 0.1;
-    var target = {
-      left: box.left + margin, right: box.right - margin,
-      top: box.top + margin, bottom: box.bottom - margin
-    };
-    if (rectsOverlap(head, target)) startBurn();
+    var m = box.width * 0.04;
+    var t = { left:box.left+m, right:box.right-m, top:box.top+m, bottom:box.bottom-m };
+    if (rectsOverlap(head, t)) startBurn(head, box);
   }
 
   /* ---------------------------------------------------------------- */
@@ -525,8 +768,7 @@
         setTimeout(function(){
           var s = document.createElement('div');
           s.className = 'smoke';
-          var jitterX = (Math.random()*20 - 10);
-          s.style.left = (r.left + r.width/2 + jitterX - 5) + 'px';
+          s.style.left = (r.left + r.width/2 + (Math.random()*20 - 10) - 5) + 'px';
           s.style.top  = (r.top + 4) + 'px';
           s.style.setProperty('--dx', (Math.random()*24 - 12) + 'px');
           document.body.appendChild(s);
@@ -537,9 +779,9 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* fire spreading across the lid                                     */
+  /* burn field                                                         */
   /* ---------------------------------------------------------------- */
-  var N = 80;
+  var N = 100;
   var radii   = new Float32Array(N);
   var speeds  = new Float32Array(N);
   var delays  = new Float32Array(N);
@@ -548,19 +790,29 @@
   var elapsed = 0, lastTs = 0;
   var burnDone = false;
   var MAX_DURATION = 8.6;
-
   var sparks = [];
 
   function initBurnField(){
-    target = Math.hypot(boxW/2, boxH/2) * 1.1;
+    target = Math.max(
+      Math.hypot(burnCenterX, burnCenterY),
+      Math.hypot(boxW - burnCenterX, burnCenterY),
+      Math.hypot(burnCenterX, boxH - burnCenterY),
+      Math.hypot(boxW - burnCenterX, boxH - burnCenterY)
+    ) * 1.06;
     BAND = target * 0.15;
-    var desired = 6.2;
+    var desired = 6.0;
     for (var i=0;i<N;i++){
       radii[i]  = 0;
       speeds[i] = (target / desired) * (0.5 + Math.random()*1.0);
       delays[i] = Math.random() * 1.0;
       seedJit[i] = (Math.random()*2 - 1) * (target*0.045);
     }
+    // smooth the jitter so the burnt edge curls instead of zig-zagging
+    for (var pass=0; pass<4; pass++){
+      var sj = seedJit.slice();
+      for (var q=0;q<N;q++) seedJit[q] = (sj[(q-1+N)%N] + sj[q]*2 + sj[(q+1)%N]) / 4;
+    }
+    for (var q2=0;q2<N;q2++) seedJit[q2] *= 1.8;
     sparks.length = 0;
   }
 
@@ -569,7 +821,7 @@
     for (var i=0;i<N;i++){
       var prev = copy[(i - 1 + N) % N];
       var next = copy[(i + 1) % N];
-      radii[i] = radii[i]*0.86 + (prev+next)/2*0.14;
+      radii[i] = radii[i]*0.8 + (prev+next)/2*0.2;
     }
   }
 
@@ -578,27 +830,29 @@
   function polygonPoints(cx, cy, radiusFn){
     var pts = [];
     for (var i=0;i<N;i++){
-      var a = angleAt(i);
-      var r = radiusFn(i);
+      var a = angleAt(i), r = radiusFn(i);
       pts.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r]);
     }
     return pts;
   }
   function pathFromPoints(ctx, pts){
+    var n = pts.length;
     ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.moveTo((pts[n-1][0]+pts[0][0])/2, (pts[n-1][1]+pts[0][1])/2);
+    for (var i=0;i<n;i++){
+      var a = pts[i], b = pts[(i+1)%n];
+      ctx.quadraticCurveTo(a[0], a[1], (a[0]+b[0])/2, (a[1]+b[1])/2);
+    }
     ctx.closePath();
   }
 
   function renderRadiusAt(i){
     var jitter = seedJit[i] + Math.sin(elapsed*0.8 + i*2.1) * (target*0.018);
-    var r = radii[i] + jitter;
-    return Math.max(0, Math.min(target, r));
+    return clamp(radii[i] + jitter, 0, target);
   }
 
   function drawLidFrame(){
-    var cx = boxW/2, cy = boxH/2;
+    var cx = burnCenterX, cy = burnCenterY;
 
     lctx.clearRect(0,0,boxW,boxH);
     lctx.drawImage(paperPattern, 0, 0, boxW, boxH);
@@ -609,44 +863,46 @@
     var innerPts = polygonPoints(cx, cy, function(i){ return Math.max(0, renderRadiusAt(i) - BAND); });
 
     lctx.save();
-    lctx.globalCompositeOperation = 'source-over';
+    if (state === 'burning'){
+      var haloPts = polygonPoints(cx, cy, function(i){ return renderRadiusAt(i) + BAND*0.38; });
+      pathFromPoints(lctx, haloPts);
+      lctx.fillStyle = 'rgba(214,150,122,.26)';
+      lctx.fill();
+    }
 
     pathFromPoints(lctx, outerPts);
-    lctx.fillStyle = '#4a2712';
+    lctx.fillStyle = 'rgba(158,98,84,.92)';
     lctx.fill();
 
     pathFromPoints(lctx, midPts);
-    lctx.fillStyle = '#2a160a';
+    lctx.fillStyle = '#6c3e46';
     lctx.fill();
 
     pathFromPoints(lctx, darkPts);
-    lctx.fillStyle = '#150b05';
+    lctx.fillStyle = '#3b222b';
     lctx.fill();
 
     if (state === 'burning'){
       pathFromPoints(lctx, outerPts);
       lctx.lineWidth = Math.max(1.4, BAND*0.14);
-      lctx.strokeStyle = 'rgba(255,140,50,.85)';
+      lctx.strokeStyle = 'rgba(255,146,112,.9)';
       lctx.stroke();
       lctx.lineWidth = Math.max(0.8, BAND*0.06);
-      lctx.strokeStyle = 'rgba(255,210,120,.75)';
+      lctx.strokeStyle = 'rgba(255,226,186,.85)';
       lctx.stroke();
     }
     lctx.restore();
 
     lctx.save();
-    lctx.globalCompositeOperation = 'source-over';
     for (var s=0; s<sparks.length; s++){
       var sp = sparks[s];
       lctx.beginPath();
-      lctx.arc(sp.x, sp.y, sp.r + sp.r*0.5, 0, Math.PI*2);
-      lctx.fillStyle = '#2a160a';
+      lctx.arc(sp.x, sp.y, sp.r*1.5, 0, Math.PI*2);
+      lctx.fillStyle = '#3b222b';
       lctx.fill();
       if (sp.r < sp.maxR*0.9 && state === 'burning'){
-        lctx.beginPath();
-        lctx.arc(sp.x, sp.y, sp.r + sp.r*0.5, 0, Math.PI*2);
         lctx.lineWidth = 1.1;
-        lctx.strokeStyle = 'rgba(255,150,60,.7)';
+        lctx.strokeStyle = 'rgba(255,160,120,.75)';
         lctx.stroke();
       }
     }
@@ -655,7 +911,7 @@
     lctx.save();
     lctx.globalCompositeOperation = 'destination-out';
     pathFromPoints(lctx, innerPts);
-    lctx.fillStyle = 'rgba(0,0,0,1)';
+    lctx.fillStyle = '#000';
     lctx.fill();
     for (var s2=0; s2<sparks.length; s2++){
       var sp2 = sparks[s2];
@@ -668,81 +924,86 @@
 
   function updateSparks(dt){
     if (state !== 'burning') return;
-    if (Math.random() < 0.55 * dt){
-      if (sparks.length < 10 && elapsed > 0.6){
-        var i = Math.floor(Math.random()*N);
-        var a = angleAt(i);
-        var baseR = radii[i];
-        var reach = baseR + 10 + Math.random()*26;
-        if (reach < target*0.92){
-          sparks.push({
-            x: boxW/2 + Math.cos(a)*reach,
-            y: boxH/2 + Math.sin(a)*reach,
-            r: 0.5,
-            maxR: 6 + Math.random()*10,
-            grow: 14 + Math.random()*10
-          });
-        }
+    if (Math.random() < 0.55 * dt && sparks.length < 10 && elapsed > 0.6){
+      var i = Math.floor(Math.random()*N);
+      var a = angleAt(i);
+      var reach = radii[i] + 10 + Math.random()*26;
+      if (reach < target*0.92){
+        sparks.push({
+          x: burnCenterX + Math.cos(a)*reach,
+          y: burnCenterY + Math.sin(a)*reach,
+          r: 0.5, maxR: 6 + Math.random()*10, grow: 14 + Math.random()*10
+        });
       }
     }
     for (var k=sparks.length-1; k>=0; k--){
       var sp = sparks[k];
       if (sp.r < sp.maxR) sp.r += sp.grow * dt;
-      var dx = sp.x - boxW/2, dy = sp.y - boxH/2;
+      var dx = sp.x - burnCenterX, dy = sp.y - burnCenterY;
       var ang = Math.atan2(dy,dx); if (ang<0) ang += Math.PI*2;
       var idx = Math.round(ang / (Math.PI*2) * N) % N;
-      var dist = Math.hypot(dx,dy);
-      if (radii[idx] > dist + BAND*0.3) sparks.splice(k,1);
+      if (radii[idx] > Math.hypot(dx,dy) + BAND*0.3) sparks.splice(k,1);
     }
   }
 
   /* ---------------------------------------------------------------- */
-  /* flame tongues along the burning frontier                          */
+  /* flames along the frontier                                          */
   /* ---------------------------------------------------------------- */
   var flameSlots = [];
   var embers = [];
+  var ignitionStarted = 0;
 
   function initFlameSlots(){
     flameSlots = [];
-    for (var i=0;i<N;i+=2){
-      flameSlots.push({ idx:i, phase: Math.random()*Math.PI*2 });
-    }
+    for (var i=0;i<N;i+=2) flameSlots.push({ idx:i, phase: Math.random()*Math.PI*2 });
+  }
+
+  function insideLid(x, y, pad){
+    return x > -pad && x < boxW + pad && y > -pad && y < boxH + pad;
   }
 
   function drawFireFrame(dt){
     var w = fireCanvas.width/DPR, h = fireCanvas.height/DPR;
     fctx.clearRect(0,0,w,h);
 
-    var cx = boxW/2, cy = boxH/2;
-    var baseW = Math.max(10, boxW*0.065);
-    var baseH = Math.max(16, boxH*0.16);
-    var maxReach = Math.min(boxW, boxH) * 0.5; // keep tongues from straying too far from their anchor
+    var cx = burnCenterX, cy = burnCenterY;
+    var baseW = Math.max(9, boxW*0.05);
+    var baseH = Math.max(18, boxH*0.18);
+    var maxReach = Math.min(boxW, boxH) * 0.5;
 
     fctx.globalCompositeOperation = 'lighter';
 
     for (var s=0; s<flameSlots.length; s++){
       var fs = flameSlots[s];
       var i = fs.idx;
-      var active = elapsed > delays[i] && radii[i] < target - 2;
-      if (!active) continue;
+      if (!(elapsed > delays[i] && radii[i] < target - 2)) continue;
 
       var a = angleAt(i);
       var r = radii[i];
-      var px = cx + Math.cos(a)*r + fireOffsetX;
-      var py = cy + Math.sin(a)*r + fireOffsetY;
+      var lx = cx + Math.cos(a)*r, ly = cy + Math.sin(a)*r;
+      if (!insideLid(lx, ly, 2)) continue;
 
       var fadeIn  = Math.min(1, (elapsed - delays[i]) / 0.5);
       var fadeOut = Math.min(1, (target - 2 - radii[i]) / (target*0.14));
       var intensity = Math.max(0, fadeIn) * Math.max(0, fadeOut);
       if (intensity <= 0.02) continue;
 
-      var hVar = 0.7 + 0.3*Math.sin(elapsed*3.3 + fs.phase);
-      var wVar = 0.88 + 0.12*Math.sin(elapsed*2.1 + fs.phase*1.7);
-      var lean = Math.sin(elapsed*4.4 + fs.phase) * baseW*0.32 +
-                 Math.sin(elapsed*1.5 + fs.phase*0.6) * baseW*0.16;
-      lean = Math.max(-maxReach*0.3, Math.min(maxReach*0.3, lean));
+      var hVar = 0.62 + 0.38*Math.sin(elapsed*4.1 + fs.phase);
+      var wVar = 0.74 + 0.26*Math.sin(elapsed*2.7 + fs.phase*1.7);
+      var lean = Math.sin(elapsed*5.2 + fs.phase) * baseW*0.26 +
+                 Math.sin(elapsed*1.8 + fs.phase*0.6) * baseW*0.13;
+      var tongueH = Math.min(baseH*hVar*intensity, maxReach*0.6);
 
-      drawFlame(fctx, px, py, baseW*wVar, Math.min(baseH*hVar*intensity, maxReach*0.6), lean, 0.85*intensity);
+      var rot = a + Math.PI/2;
+      while (rot > Math.PI) rot -= Math.PI*2;
+      rot *= 0.35;
+
+      fctx.save();
+      fctx.translate(lx + fireOffsetX, ly + fireOffsetY);
+      fctx.rotate(rot);
+      drawFlame(fctx, 0, 0, baseW*wVar, tongueH, lean, 0.8*intensity);
+      if (s % 3 === 0) drawFlame(fctx, baseW*0.22, -2, baseW*0.52, tongueH*0.58, -lean*0.7, 0.46*intensity);
+      fctx.restore();
     }
 
     fctx.globalCompositeOperation = 'source-over';
@@ -750,16 +1011,18 @@
     if (state === 'burning' && Math.random() < 0.5){
       var i2 = Math.floor(Math.random()*N);
       if (elapsed > delays[i2] && radii[i2] < target - 4){
-        var a2 = angleAt(i2);
-        var r2 = radii[i2];
-        embers.push({
-          x: cx + Math.cos(a2)*r2 + fireOffsetX + (Math.random()*10-5),
-          y: cy + Math.sin(a2)*r2 + fireOffsetY,
-          vx: (Math.random()-0.5)*14,
-          vy: -(30 + Math.random()*34),
-          life:0, maxLife: 0.7 + Math.random()*0.7,
-          size: 1.4 + Math.random()*1.8
-        });
+        var a2 = angleAt(i2), r2 = radii[i2];
+        var ex = cx + Math.cos(a2)*r2, ey = cy + Math.sin(a2)*r2;
+        if (insideLid(ex, ey, 0)){
+          embers.push({
+            x: ex + fireOffsetX + (Math.random()*10-5),
+            y: ey + fireOffsetY,
+            vx: (Math.random()-0.5)*14,
+            vy: -(30 + Math.random()*34),
+            life:0, maxLife: 0.7 + Math.random()*0.7,
+            size: 1.4 + Math.random()*1.8
+          });
+        }
       }
     }
     fctx.globalCompositeOperation = 'lighter';
@@ -772,27 +1035,32 @@
       var alpha = Math.sin((1-t)*Math.PI/2);
       fctx.beginPath();
       fctx.arc(em.x, em.y, em.size*(1-t*0.3), 0, Math.PI*2);
-      fctx.fillStyle = 'rgba(255,' + Math.round(210-60*t) + ',' + Math.round(90-70*t) + ',' + (alpha*0.9) + ')';
+      fctx.fillStyle = 'rgba(255,' + Math.round(214-50*t) + ',' + Math.round(180-60*t) + ',' + (alpha*0.9) + ')';
       fctx.fill();
     }
     fctx.globalCompositeOperation = 'source-over';
   }
 
   /* ---------------------------------------------------------------- */
-  /* main burn loop                                                     */
+  /* burn sequence                                                      */
   /* ---------------------------------------------------------------- */
-  function startBurn(){
-    if (state === 'burning' || state === 'done') return;
-    state = 'burning';
+  function startBurn(head, box){
+    if (state !== 'lit') return;
+    state = 'kindling';
+    dragging = false;
     hideHint();
+
+    burnCenterX = clamp((head.left + head.right)/2 - box.left, boxW*0.06, boxW*0.94);
+    burnCenterY = clamp((head.top + head.bottom)/2 - box.top, boxH*0.06, boxH*0.94);
 
     match.classList.remove('is-lit');
     match.classList.add('is-done');
-    matchFlameCv.style.opacity = '0';
 
     initBurnField();
     initFlameSlots();
     fireCanvas.classList.add('is-active');
+    ignitionStarted = performance.now();
+    ambientGlow.style.setProperty('--glow', '0.28');
 
     spawnSmoke(match.querySelector('.head'), 4);
     setTimeout(function(){
@@ -800,13 +1068,47 @@
       match.style.opacity = '0';
     }, 500);
 
+    requestAnimationFrame(kindleStep);
+  }
+
+  function kindleStep(ts){
+    if (state !== 'kindling') return;
+    var t = Math.max(0, (ts - ignitionStarted) / 1000);
+    var w = fireCanvas.width / DPR, h = fireCanvas.height / DPR;
+    fctx.clearRect(0,0,w,h);
+
+    var cx = burnCenterX + fireOffsetX;
+    var cy = burnCenterY + fireOffsetY;
+    var swell = Math.min(1, t / .72);
+    var flicker = 1 + Math.sin(ts * .018) * .08 + Math.sin(ts * .031) * .035;
+
+    fctx.save();
+    fctx.globalCompositeOperation = 'lighter';
+    var glow = fctx.createRadialGradient(cx,cy,1,cx,cy,boxW*.3);
+    glow.addColorStop(0,  'rgba(255,190,150,' + (.42*swell) + ')');
+    glow.addColorStop(.35,'rgba(246,128,128,' + (.18*swell) + ')');
+    glow.addColorStop(1,  'rgba(246,128,128,0)');
+    fctx.fillStyle = glow;
+    fctx.beginPath();
+    fctx.ellipse(cx,cy,boxW*.3,boxH*.2,0,0,Math.PI*2);
+    fctx.fill();
+
+    var flameH = (22 + 48*swell) * flicker;
+    fctx.translate(cx,cy);
+    drawFlame(fctx,0,0,boxW*.062,flameH,Math.sin(ts*.014)*4,.93);
+    fctx.rotate(-.16);
+    drawFlame(fctx,-boxW*.035,2,boxW*.036,flameH*.66,-2,.62);
+    fctx.restore();
+
+    if (t < 1.45){ requestAnimationFrame(kindleStep); return; }
+    state = 'burning';
     elapsed = 0;
-    lastTs = performance.now();
+    lastTs = ts;
     requestAnimationFrame(burnStep);
   }
 
   function burnStep(ts){
-    var dt = Math.min(0.045, (ts - lastTs) / 1000);
+    var dt = clamp((ts - lastTs) / 1000, 0, 0.045);
     lastTs = ts;
     elapsed += dt;
 
@@ -814,9 +1116,7 @@
     for (var i=0;i<N;i++){
       if (elapsed > delays[i] && radii[i] < target){
         var wobble = Math.sin(elapsed*2.3 + i*0.7) * speeds[i] * 0.10;
-        radii[i] += (speeds[i] + wobble) * dt;
-        if (radii[i] < 0) radii[i] = 0;
-        if (radii[i] > target) radii[i] = target;
+        radii[i] = clamp(radii[i] + (speeds[i] + wobble) * dt, 0, target);
       }
       if (radii[i] < minR) minR = radii[i];
     }
@@ -829,9 +1129,8 @@
     var progress = 0;
     for (var j=0;j<N;j++) progress += radii[j];
     progress = progress / (N*target);
-    var p = progress.toFixed(3);
-    ambientGlow.style.setProperty('--glow', p);
-    boxInterior.style.setProperty('--reveal', p);
+    ambientGlow.style.setProperty('--glow', (0.28 + progress*0.5).toFixed(3));
+    boxInterior.style.setProperty('--reveal', (progress*0.55).toFixed(3));
 
     if ((minR >= target - 1 || elapsed >= MAX_DURATION) && !burnDone){
       finishBurn();
@@ -844,11 +1143,9 @@
     burnDone = true;
     for (var i=0;i<N;i++) radii[i] = target;
     sparks.length = 0;
-    drawLidFrame();
     state = 'done';
-    boxWrap.classList.add('is-revealed');
-    ambientGlow.style.setProperty('--glow', '1');
-    boxInterior.style.setProperty('--reveal', '1');
+    drawLidFrame();
+    lidCanvas.style.display = 'none';
 
     var fadeStart = performance.now();
     (function fadeOut(){
@@ -863,33 +1160,349 @@
     })();
 
     setTimeout(function(){
-      ambientGlow.style.setProperty('--glow', '0.4');
+      matchZone.classList.add('gone');
+      hint.classList.add('gone');
+    }, 500);
+
+    setTimeout(startSurprise, 1750);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* FX layer: bokeh, the heart of light, petals                       */
+  /* ---------------------------------------------------------------- */
+  function makeSprite(stops){
+    var c = document.createElement('canvas');
+    c.width = c.height = 64;
+    var g = c.getContext('2d');
+    var rg = g.createRadialGradient(32,32,0,32,32,32);
+    stops.forEach(function(s){ rg.addColorStop(s[0], s[1]); });
+    g.fillStyle = rg;
+    g.fillRect(0,0,64,64);
+    return c;
+  }
+  var moteSprite = makeSprite([[0,'rgba(255,252,248,1)'],[.22,'rgba(255,222,214,.95)'],[.5,'rgba(247,166,188,.38)'],[1,'rgba(247,166,188,0)']]);
+  var bokehSprites = [
+    makeSprite([[0,'rgba(255,255,255,.9)'],[.6,'rgba(255,255,255,.35)'],[1,'rgba(255,255,255,0)']]),
+    makeSprite([[0,'rgba(250,200,214,.9)'],[.6,'rgba(250,200,214,.35)'],[1,'rgba(250,200,214,0)']]),
+    makeSprite([[0,'rgba(222,204,242,.9)'],[.6,'rgba(222,204,242,.35)'],[1,'rgba(222,204,242,0)']])
+  ];
+
+  var bokeh = [];
+  function initBokeh(){
+    bokeh = [];
+    for (var i=0;i<22;i++){
+      bokeh.push({
+        x: Math.random()*fxW, y: Math.random()*fxH,
+        r: 10 + Math.random()*34,
+        a: .12 + Math.random()*.22,
+        vy: -(5 + Math.random()*9),
+        ph: Math.random()*6.28,
+        spr: i % 3,
+        heart: i < 6
+      });
+    }
+  }
+
+  function drawBokeh(dt, time){
+    bctx.clearRect(0,0,fxW,fxH);
+    for (var i=0;i<bokeh.length;i++){
+      var b = bokeh[i];
+      b.y += b.vy*dt;
+      var x = b.x + Math.sin(time*0.3 + b.ph)*14;
+      if (b.y < -60){ b.y = fxH + 60; b.x = Math.random()*fxW; }
+      var tw = 0.75 + 0.25*Math.sin(time*0.8 + b.ph);
+      if (b.heart){
+        bctx.save();
+        bctx.globalAlpha = b.a * tw * 0.9;
+        heartPath(bctx, x, b.y, b.r*0.22);
+        bctx.fillStyle = b.spr === 2 ? '#e4d3f3' : '#f6c3d0';
+        bctx.fill();
+        bctx.restore();
+      } else {
+        bctx.globalAlpha = b.a * tw;
+        bctx.drawImage(bokehSprites[b.spr], x - b.r, b.y - b.r, b.r*2, b.r*2);
+      }
+    }
+    bctx.globalAlpha = 1;
+  }
+
+  var PETAL_COLORS = ['#f7c3cf','#f9d6de','#f0aec0','#fbe2d7','#e8d6f2','#fde9ee','#f4b9c9','#f1c9e0'];
+  var petals = [];
+  var motes = [];
+  var heartC = { x:0, y:0 }, heartS = 1;
+  var surpriseT0 = 0;
+  var phase = 'none'; // none -> gather -> after
+  var flash = null;
+  var rainT = 0, rainAcc = 0;
+  var BURST_AT = 4.45;
+
+  function heartPoint(t){
+    return {
+      x: 16*Math.pow(Math.sin(t),3),
+      y: -(13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t))
+    };
+  }
+
+  function startSurprise(){
+    var r = boxInterior.getBoundingClientRect();
+    heartS = Math.min(r.width, r.height) * 0.019;
+    heartC.x = r.left + r.width/2;
+    heartC.y = r.top + r.height/2 - 2.5*heartS;
+
+    motes = [];
+    var OUT = 120, IN = 55;
+    for (var i=0;i<OUT+IN;i++){
+      var p;
+      if (i < OUT){
+        p = heartPoint(i/OUT*Math.PI*2);
+      } else {
+        p = heartPoint(Math.random()*Math.PI*2);
+        var k = .2 + Math.random()*.65;
+        p.x *= k; p.y = (p.y - 2.5)*k + 2.5;
+      }
+      motes.push({
+        sx: r.left + Math.random()*r.width,
+        sy: r.top + Math.random()*r.height,
+        tx: p.x, ty: p.y,
+        delay: Math.random()*.5,
+        size: i < OUT ? 2.2 + Math.random()*2.4 : 1.4 + Math.random()*1.8,
+        ph: Math.random()*6.28,
+        tw: 2 + Math.random()*3,
+        x: 0, y: 0
+      });
+    }
+    surpriseT0 = performance.now();
+    phase = 'gather';
+  }
+
+  function beatAt(t){
+    return .10*gauss(t,3.05,.07) + .17*gauss(t,3.28,.09) +
+           .12*gauss(t,3.95,.07) + .22*gauss(t,4.18,.10);
+  }
+
+  function makePetal(x, y, vx, vy, kind){
+    return {
+      x:x, y:y, vx:vx, vy:vy,
+      rot: Math.random()*6.28, vr:(Math.random()-.5)*3.5,
+      flip: Math.random()*6.28, vf: 1.6 + Math.random()*2.6,
+      size: 6 + Math.random()*7,
+      col: PETAL_COLORS[Math.floor(Math.random()*PETAL_COLORS.length)],
+      sway: Math.random()*6.28,
+      kind: kind || (Math.random() < .16 ? 'heart' : 'petal')
+    };
+  }
+
+  function drawPetal(p){
+    var s = p.size;
+    xctx.save();
+    xctx.translate(p.x, p.y);
+    xctx.rotate(p.rot);
+    xctx.scale(0.3 + 0.7*Math.abs(Math.cos(p.flip)), 1);
+    if (p.kind === 'heart'){
+      heartPath(xctx, 0, 0, s*0.55);
+      xctx.fillStyle = p.col;
+      xctx.fill();
+    } else {
+      xctx.beginPath();
+      xctx.moveTo(0, -s);
+      xctx.bezierCurveTo(s*.9, -s*.6, s*.7, s*.7, 0, s);
+      xctx.bezierCurveTo(-s*.7, s*.7, -s*.9, -s*.6, 0, -s);
+      xctx.fillStyle = p.col;
+      xctx.fill();
+      xctx.beginPath();
+      xctx.ellipse(-s*.15, -s*.2, s*.22, s*.5, 0, 0, Math.PI*2);
+      xctx.fillStyle = 'rgba(255,255,255,.35)';
+      xctx.fill();
+    }
+    xctx.restore();
+  }
+
+  function updatePetals(dt, time){
+    for (var i=petals.length-1; i>=0; i--){
+      var p = petals[i];
+      var wind = Math.sin(time*0.9 + p.sway)*24;
+      p.vx += (wind - p.vx) * Math.min(1, dt*1.1);
+      p.vy += ((42 + p.size*2.2) - p.vy) * Math.min(1, dt*1.0);
+      p.x += p.vx*dt; p.y += p.vy*dt;
+      p.rot += p.vr*dt; p.flip += p.vf*dt;
+      if (p.y > fxH + 30 || p.x < -60 || p.x > fxW + 60) petals.splice(i,1);
+    }
+  }
+
+  function burst(){
+    for (var i=0;i<motes.length;i++){
+      var m = motes[i];
+      var dx = m.x - heartC.x, dy = m.y - heartC.y;
+      var d = Math.hypot(dx,dy) || 1;
+      var sp = 160 + Math.random()*300;
+      petals.push(makePetal(m.x, m.y, dx/d*sp, dy/d*sp - 140));
+    }
+    motes = [];
+    flash = { t0: performance.now() };
+    phase = 'after';
+    rainT = 0;
+    revealMessage();
+  }
+
+  function drawSurprise(dt, now){
+    var t = (now - surpriseT0) / 1000;
+
+    if (phase === 'gather'){
+      var beat = beatAt(t);
+      var settle = clamp((t - 1.9) / 0.8, 0, 1);
+
+      xctx.save();
+      xctx.globalCompositeOperation = 'lighter';
+      if (settle > 0){
+        var R = heartS * (26 + beat*60);
+        var g = xctx.createRadialGradient(heartC.x, heartC.y + 2.5*heartS, 0, heartC.x, heartC.y + 2.5*heartS, R);
+        g.addColorStop(0, 'rgba(255,214,224,' + ((.20 + beat*1.6) * settle) + ')');
+        g.addColorStop(1, 'rgba(255,214,224,0)');
+        xctx.fillStyle = g;
+        xctx.fillRect(heartC.x - R, heartC.y + 2.5*heartS - R, R*2, R*2);
+      }
+      for (var i=0;i<motes.length;i++){
+        var m = motes[i];
+        var appear = clamp((t - m.delay*0.6) / 0.6, 0, 1);
+        var conv = easeInOutCubic(clamp((t - 0.7 - m.delay) / 1.6, 0, 1));
+        var free = 1 - conv;
+        var drX = Math.sin(t*1.3 + m.ph)*10*free;
+        var drY = Math.cos(t*1.1 + m.ph)*8*free - t*7*free;
+        var hx = heartC.x + m.tx*heartS*(1+beat);
+        var hy = heartC.y + m.ty*heartS*(1+beat);
+        m.x = lerp(m.sx + drX, hx, conv);
+        m.y = lerp(m.sy + drY, hy, conv);
+        var a = appear * (0.7 + 0.3*Math.sin(t*m.tw + m.ph));
+        var sz = m.size * (1 + beat*1.6) * 3;
+        xctx.globalAlpha = a;
+        xctx.drawImage(moteSprite, m.x - sz, m.y - sz, sz*2, sz*2);
+      }
+      xctx.restore();
+
+      if (t >= BURST_AT) burst();
+    }
+
+    if (flash){
+      var ft = (now - flash.t0) / 1000;
+      if (ft > 1.1){ flash = null; }
+      else {
+        var e = 1 - Math.pow(1 - ft/1.1, 3);
+        var fr = heartS * (8 + e*48);
+        var cy = heartC.y + 2.5*heartS;
+        var fg = xctx.createRadialGradient(heartC.x, cy, fr*0.2, heartC.x, cy, fr);
+        fg.addColorStop(0, 'rgba(255,240,244,' + (.55*(1-e)) + ')');
+        fg.addColorStop(.7,'rgba(250,196,214,' + (.25*(1-e)) + ')');
+        fg.addColorStop(1, 'rgba(250,196,214,0)');
+        xctx.fillStyle = fg;
+        xctx.fillRect(heartC.x - fr, cy - fr, fr*2, fr*2);
+      }
+    }
+
+    if (phase === 'after'){
+      rainT += dt;
+      var rate = rainT < 5 ? 12 : 2.2;
+      rainAcc += rate*dt;
+      while (rainAcc >= 1){
+        rainAcc -= 1;
+        if (petals.length < 120) petals.push(makePetal(Math.random()*fxW, -20, 0, 30));
+      }
+    }
+  }
+
+  var lastFx = 0;
+  function fxLoop(now){
+    var dt = lastFx ? clamp((now - lastFx)/1000, 0, 0.05) : 0.016;
+    lastFx = now;
+    var time = now/1000;
+
+    drawBokeh(dt, time);
+
+    xctx.clearRect(0,0,fxW,fxH);
+    if (phase !== 'none') drawSurprise(dt, now);
+    updatePetals(dt, time);
+    for (var i=0;i<petals.length;i++) drawPetal(petals[i]);
+
+    requestAnimationFrame(fxLoop);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* message reveal                                                     */
+  /* ---------------------------------------------------------------- */
+  function splitWords(el){
+    Array.prototype.slice.call(el.childNodes).forEach(function(n){
+      if (n.nodeType === 3){
+        var frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(function(part){
+          if (!part) return;
+          if (/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(part)); return; }
+          var s = document.createElement('span');
+          s.className = 'word';
+          s.textContent = part;
+          frag.appendChild(s);
+        });
+        el.replaceChild(frag, n);
+      } else if (n.nodeType === 1 && n.tagName !== 'BR'){
+        n.classList.add('word');
+      }
+    });
+  }
+
+  function revealMessage(){
+    boxWrap.classList.add('is-revealed');
+    boxInterior.style.setProperty('--reveal', '1');
+    ambientGlow.style.setProperty('--glow', '0.7');
+    var words = boxText.querySelectorAll('.word');
+    for (var i=0;i<words.length;i++){
+      (function(el, d){
+        setTimeout(function(){ el.classList.add('on'); }, d);
+      })(words[i], 250 + i*150);
+    }
+    setTimeout(function(){
+      ambientGlow.style.setProperty('--glow', '0.45');
       startIdleFlicker();
-    }, 2000);
+    }, 3500);
   }
 
   var idleFlickerT = 0;
   function startIdleFlicker(){
     (function tick(){
       idleFlickerT += 0.033;
-      var f = 1 + Math.sin(idleFlickerT*2.1)*0.05 + Math.sin(idleFlickerT*5.3)*0.03;
+      var f = 1 + Math.sin(idleFlickerT*1.4)*0.08 + Math.sin(idleFlickerT*3.1)*0.03;
       document.documentElement.style.setProperty('--flicker', f.toFixed(3));
       requestAnimationFrame(tick);
     })();
   }
 
+  // a little extra: once revealed, touching the screen releases petals & hearts
+  window.addEventListener('pointerdown', function(e){
+    if (phase !== 'after') return;
+    for (var i=0;i<9;i++){
+      var a = -Math.PI/2 + (Math.random()-.5)*2.2;
+      var sp = 90 + Math.random()*170;
+      petals.push(makePetal(e.clientX, e.clientY, Math.cos(a)*sp, Math.sin(a)*sp, Math.random() < .5 ? 'heart' : 'petal'));
+    }
+  });
+
   /* ---------------------------------------------------------------- */
   /* init                                                               */
   /* ---------------------------------------------------------------- */
   function init(){
+    boxText.querySelectorAll('[data-split]').forEach(splitWords);
+    sizeFx();
+    initBokeh();
     sizeCanvases();
     placeMatchHome();
+    requestAnimationFrame(fxLoop);
   }
 
   if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
+  }
+  // fonts can shift layout slightly — re-measure once they're in
+  if (document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){ if (state === 'idle'){ sizeCanvases(); placeMatchHome(); } });
   }
 
 })();
